@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/controllerTest.dir/src/control.cpp.o CMakeFiles/controllerTest.dir/src/main.cpp.o CMakeFiles/controllerTest.dir/src/twitch.cpp.o -o controllerTest   -L/home/musungo/coding/controllerTest/src  -L/home/musungo/coding/controllerTest/evdev  -Wl,-rpath,/home/musungo/coding/controllerTest/src:/home/musungo/coding/controllerTest/evdev -levdev 

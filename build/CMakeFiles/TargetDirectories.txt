@@ -1,0 +1,3 @@
+/home/musungo/coding/controllerTest/build/CMakeFiles/rebuild_cache.dir
+/home/musungo/coding/controllerTest/build/CMakeFiles/edit_cache.dir
+/home/musungo/coding/controllerTest/build/CMakeFiles/controllerTest.dir
