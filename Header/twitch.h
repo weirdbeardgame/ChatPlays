@@ -14,16 +14,18 @@ class Twitch
     sockaddr_in sockIn;
     hostent *host;
     addrinfo info, *infoP;
-    std::string address = "wss://irc-ws.chat.twitch.tv";
+    std::string address = "irc.chat.twitch.tv";
     // IRC Ping Pong game!
     std::string repsonse = "PONG :tmi.twitch.tv";
-    std::string portString;
+    std::string password = "oauth:wp2lvqkqijtz0kngrc68km0kqjnwqg";
     Control controller;
     std::string outputBuffer;
     public:
     bool open();
+    bool login();
     // bool open(std::string address for other service integration like discord?
     // recieve commands from chat and parse
+    bool sendAll(std::string buf);
     bool input(); 
     void close();
 

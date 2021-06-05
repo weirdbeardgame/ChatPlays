@@ -1,11 +1,12 @@
 #include <iostream>
-#include "control.h"
+#include "twitch.h"
 
 int main()
 {
+    
     Control controller;
     std::string keyCode;
-    bool input = controller.init();
+    bool input = controller.CreateController();
     std::cout << "Start " << input << std::endl;
     while(input)
     {
@@ -14,8 +15,7 @@ int main()
         input += controller.emit(keyCode);
     }
 
-    /*
-    Twitch connection;
+    /*Twitch connection;
 
     bool isActive = connection.open();
 
@@ -23,7 +23,6 @@ int main()
     {
         // process input in here
         // connection.input(); 
-    }
-    */
+    }*/
     return 0;
 }
