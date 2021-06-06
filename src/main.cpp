@@ -3,7 +3,7 @@
 
 int main()
 {
-    
+    /*
     Control controller;
     std::string keyCode;
     bool input = controller.CreateController();
@@ -13,15 +13,15 @@ int main()
         std::cout << "Enter a keycode: ";
         std::cin >> keyCode;
         input += controller.emit(controller.GetCommands(keyCode));
-    }
+    }*/
 
-    /*Twitch connection;
+    Twitch connection;
 
-    bool isActive = connection.open();
+    bool isActive = connection.login();
 
     while (isActive)
     {
-        connection.update();
-    }*/
+        isActive = connection.update();
+    }
     return 0;
 }

@@ -13,6 +13,6 @@ pkg_search_module(EVDEV REQUIRED libevdev)
 include_directories(${CMAKE_SOURCE_DIR}/Header ${EVDEV_INCLUDE_DIRS})
 link_directories(${CMAKE_SOURCE_DIR}/src ${EVDEV_LIBRARIES})
 
-set (SOURCES src/control.cpp src/main.cpp src/twitch.cpp)
+set (SOURCES src/control.cpp src/main.cpp src/twitch.cpp src/connect.cpp)
 add_executable(controllerTest ${SOURCES})
 target_link_libraries(controllerTest PRIVATE ${EVDEV_LIBRARIES})

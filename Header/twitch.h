@@ -1,31 +1,23 @@
+#pragma once
 #include <iostream>
 #include <stdio.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "control.h"
+#include "connect.h"
 
 class Twitch
 {
     private:
-    int sock;
-    int portno;
-    sockaddr_in sockIn;
-    hostent *host;
-    addrinfo info, *infoP;
     std::string address = "irc.chat.twitch.tv";
     // IRC Ping Pong game!
     std::string pong = "PONG :tmi.twitch.tv";
-    std::string password = "OAUTH HERE";
+    std::string password = "oauth:h0afs2o2pu7idj4feqs3krdroovobv";
+    Connect connection;
     Control controller;
     std::vector<char> buffer;
     public:
-    bool open();
     bool login();
     // bool open(std::string address for other service integration like discord?
     // recieve commands from chat and parse
-    bool sendAll(std::string buf);
     bool update(); 
     void exit();
 
