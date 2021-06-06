@@ -30,11 +30,11 @@ bool Control::CreateController()
     int type = buttonCodes[0];
     for (int i = 0; i < buttonCodes.size(); i++)
     {
-        if (i <= 8)
+        if (i <= 7)
         {
             libevdev_enable_event_code(dev, EV_ABS, buttonCodes[i], abs[i]);
         }
-        else if (i >= 8)
+        else if (i > 7)
         {
             libevdev_enable_event_code(dev, EV_KEY, buttonCodes[i], NULL);
         }
@@ -52,85 +52,158 @@ bool Control::CreateController()
     }
 }
 
-bool Control::emit(std::string keyCode)
+int Control::pressBtn(int button)
 {
     int emitCode = 0;
-    if (keyCode == "UP")
+
+    emitCode = libevdev_uinput_write_event(uidev, EV_KEY, button, 1);
+    if (emitCode < 0)
     {
-        // Dpad Up
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_Y, 65535);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_Y, 4095);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
     }
 
-    if (keyCode == "DOWN")
+    emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+    if (emitCode < 0)
     {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    sleep(1);
+    releaseBtn(button);
+
+    return emitCode;
+}
+
+int Control::releaseBtn(int button)
+{
+    int emitCode = 0;
+    emitCode = libevdev_uinput_write_event(uidev, EV_KEY, button, 0);
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    return emitCode;
+}
+
+int Control::moveABS(int ABS, int moveAxis, int flat)
+{
+    int emitCode = 0;
+    emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS, moveAxis);
+
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    sleep(1);
+    resetABS(ABS, flat);
+    return emitCode;
+}
+
+int Control::resetABS(int ABS, int flat)
+{
+    int emitCode = 0;
+    emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS, flat);
+
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+
+    if (emitCode < 0)
+    {
+        std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    return emitCode;
+}
+
+Buttons Control::GetCommands(std::string key)
+{
+    if (commands.find(key) != commands.end())
+    {
+        return commands[key];
+    }
+    else
+    {
+        return Buttons(-1);
+    }
+}
+
+
+bool Control::emit(Buttons keyCode)
+{
+    int emitCode = 0;
+    switch(keyCode)
+    {
+    case Buttons::UP:
+        emitCode = moveABS(ABS_Y, 65535, 4095);
+        break;
+    case Buttons::DOWN:
         // Dpad Down
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_Y, 0);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_Y, 4095);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+        emitCode = moveABS(ABS_Y, 0, 4095);
+        break;
 
-    if (keyCode == "LEFT")
-    {
+    case Buttons::LEFT:
         // Dpad Left
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_X, 0);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_X, 4095);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+        emitCode = moveABS(ABS_X, 0, 4095);
+        break;
 
-    if (keyCode == "RIGHT")
-    {
+    case Buttons::RIGHT:
         // Dpad Right
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_X, 65535);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS_X, 4095);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+        emitCode = moveABS(ABS_X, 65535, 4095);
+        break;
 
-    if (keyCode == "A")
-    {
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_SOUTH, 1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_SOUTH, 0);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+    case Buttons::A:
+        emitCode = pressBtn(BTN_SOUTH);
+        break;
 
-    if (keyCode == "B")
-    {
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_EAST, 1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_EAST, 0);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+    case Buttons::B:
+        emitCode = pressBtn(BTN_EAST);
+        break;
 
-    if (keyCode == "START")
-    {
-        std::cout << "START PRESSED" << std::endl;
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_TR, 1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-        sleep (1);
-        emitCode = libevdev_uinput_write_event(uidev, EV_KEY, BTN_TR, 0);
-        emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-    }
+    case Buttons::X:
+        emitCode = pressBtn(BTN_WEST);
+        break;
 
-    if (keyCode == "Exit")
-    {
+    case Buttons::Y:
+        emitCode = pressBtn(BTN_NORTH);
+        break;
+
+    case Buttons::START:
+        emitCode = pressBtn(BTN_TR);
+        break;
+
+    case Buttons::SELECT:
+        emitCode = pressBtn(BTN_TL);
+        break;
+
+    case Buttons::EXIT: 
         emitCode = Close();
         return emitCode;
-    }
-    if (emitCode != 0)
-    {
-        std::cout << "Code: " << emitCode << std::endl;
+        break;
     }
     return emitCode;
 }

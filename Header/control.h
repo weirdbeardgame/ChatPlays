@@ -1,12 +1,16 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
+#include <map>
+#include <queue>
 #include <vector>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <linux/uinput.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
+
+enum Buttons {UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT};
 
 class Control
 {
@@ -86,14 +90,40 @@ class Control
     };
 
     int fd = 0;
+    int maxInput = 0;
     struct libevdev *dev;
     struct uinput_user_dev device;
     struct uinput_setup usetup;
     struct libevdev_uinput *uidev;
     struct input_absinfo* init;
-
+    std::map<std::string, Buttons> commands
+    {
+        {"UP", UP},
+        {"DOWN", DOWN},
+        {"LEFT", LEFT},
+        {"RIGHT", RIGHT},
+        {"A", A},
+        {"B", B},
+        {"X", X},
+        {"Y", Y},
+        {"START", START},
+        {"SELECT", SELECT},
+        {"L1", L1},
+        {"R1", R1},
+        {"L2", L2},
+        {"R2", R2},
+        {"L3", L3},
+        {"R3", R3},
+        {"Exit", EXIT}
+    };
+    std::queue<Buttons>controlQueue;
     public:
+    Buttons GetCommands(std::string key);
     bool CreateController();
-    bool emit(std::string cmd);
+    bool emit(Buttons cmd);
+    int moveABS(int ABS, int moveAxis, int flat);
+    int resetABS(int ABS, int flatAxis);
+    int pressBtn(int btn);
+    int releaseBtn(int btn);
     bool Close();
 };

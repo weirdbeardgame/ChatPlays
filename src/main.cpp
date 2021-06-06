@@ -12,7 +12,7 @@ int main()
     {
         std::cout << "Enter a keycode: ";
         std::cin >> keyCode;
-        input += controller.emit(keyCode);
+        input += controller.emit(controller.GetCommands(keyCode));
     }
 
     /*Twitch connection;
@@ -21,8 +21,7 @@ int main()
 
     while (isActive)
     {
-        // process input in here
-        // connection.input(); 
+        connection.update();
     }*/
     return 0;
 }

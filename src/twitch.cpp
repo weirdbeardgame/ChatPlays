@@ -60,10 +60,9 @@ bool Twitch::login()
     }
 
     int i = 0;
-    int buffSize = 4;
+    int buffSize = 0;
     // not equal to catch neg error!!!
-    char *buffer = new char[512];
-    while ((i = recv(sock, buffer, 512, 0)) != 0)
+    while ((i = recv(sock, &buffer[0], 512, 0)) != 0)
     {
         std::cout << "Recieving Data" << std::endl;
         buffSize += i;
@@ -72,10 +71,9 @@ bool Twitch::login()
             std::cerr << "Recieve Err: " << gai_strerror(buffSize) << std::endl;
             return false;
         }
-        std::cout << buffer << std::endl;
+        std::string out (buffer.begin(), buffer.end());
+        std::cout << out << std::endl;
     }
-
-    delete[] buffer;
 
     return true;
 }
@@ -94,3 +92,91 @@ bool Twitch::sendAll(std::string buf)
     return true;
 }
 
+bool Twitch::update()
+{
+    // Recieve buffer. Recieve commands.
+    while (sock)
+    {
+        // stay connected
+        int i = 0;
+        // not equal to catch neg error!!!
+        for (int buffSize = 512; buffSize > 0; buffSize -= i)
+        {
+            i = recv(sock, &buffer[0], 512, 0);
+            std::cout << "Recieving Data" << std::endl;
+            buffSize += i;
+            if (buffSize < 0)
+            {
+                std::cerr << "Recieve Err: " << gai_strerror(buffSize) << std::endl;
+                return false;
+            }
+
+            std::string out (buffer.begin(), buffer.end());
+
+            if (out.find("PING :tmi.twitch.tv"))
+            {
+                sendAll(pong);
+            }
+
+            if (out.find("up"))
+            {
+                controller.emit(UP);
+            }
+
+            if (out.find("down"))
+            {
+                controller.emit(DOWN);
+            }
+
+            if (out.find("left"))
+            {
+                controller.emit(LEFT);
+            }
+
+            if (out.find("right"))
+            {
+                controller.emit(RIGHT);
+            }
+
+            if (out.find("a"))
+            {
+                controller.emit(A);
+            }
+
+            if (out.find("b"))
+            {
+                controller.emit(B);
+            }
+
+            if (out.find("x"))
+            {
+                controller.emit(X);
+            }
+
+            if (out.find("y"))
+            {
+                controller.emit(Y);
+            }
+
+            if (out.find("start"))
+            {
+                controller.emit(START);
+            }
+
+            if (out.find("select"))
+            {
+                controller.emit(SELECT);
+            }
+
+            std::cout << out << std::endl;
+            out.clear();
+       }
+    }
+}
+
+void Twitch::exit()
+{
+    memset(&info, 0, sizeof(info));
+    delete infoP;
+    close(sock);
+}
