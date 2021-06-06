@@ -13,7 +13,6 @@ class Control
     private:
     std::vector<int>buttonCodes = 
     {
-        EV_ABS,
         ABS_X,
         ABS_Y,
         ABS_RX,
@@ -22,7 +21,6 @@ class Control
         ABS_Z,
         ABS_HAT0X,
         ABS_HAT0Y,
-        EV_KEY,
         BTN_SOUTH,
         BTN_EAST,
         BTN_C,
@@ -32,7 +30,60 @@ class Control
         BTN_TR,
         BTN_TL
     };
-    struct std::vector<input_absinfo*> abs;
+    struct std::vector<input_absinfo*> abs
+    {
+        // LStick. X, Y
+        new input_absinfo
+        {
+            4095,
+            0,
+            65535,
+            255,
+            4095
+        },
+        new input_absinfo
+        {
+            4095,
+            0,
+            65535,
+            255,
+            4095
+        },
+        // RStick X, Y
+        new input_absinfo
+        {
+            4095,
+            0,
+            65535,
+            255,
+            4095
+        },
+        new input_absinfo
+        {
+            4095,
+            0,
+            65535,
+            255,
+            4095
+        },
+        // RZ, Z
+        new input_absinfo
+        {
+            63,
+            0,
+            1023,
+            255,
+            63
+        },
+        new input_absinfo
+        {
+            63,
+            0,
+            1023,
+            255,
+            63
+        }
+    };
 
     int fd = 0;
     struct libevdev *dev;

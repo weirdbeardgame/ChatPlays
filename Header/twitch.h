@@ -17,7 +17,7 @@ class Twitch
     std::string address = "irc.chat.twitch.tv";
     // IRC Ping Pong game!
     std::string repsonse = "PONG :tmi.twitch.tv";
-    std::string password = "oauth:wp2lvqkqijtz0kngrc68km0kqjnwqg";
+    std::string password = "OAUTH HERE";
     Control controller;
     std::string outputBuffer;
     public:

@@ -2,45 +2,6 @@
 
 bool Control::CreateController()
 {
-
-    // LStick X, Y
-    init = new input_absinfo();
-    init->flat = 4095;
-    init->fuzz = 255;
-    init->maximum = 65535;
-    init->minimum = 0;
-    abs.push_back(init);
-
-    init = new input_absinfo();
-    init->flat = 4095;
-    init->fuzz = 255;
-    init->maximum = 65535;
-    init->minimum = 0;
-    abs.push_back(init);
-
-    // R Stick X, Y
-    init = new input_absinfo();
-    init->flat = 4095;
-    init->fuzz = 255;
-    init->maximum = 65535;
-    init->minimum = 0;
-    abs.push_back(init);
-
-    init = new input_absinfo();
-    init->flat = 4095;
-    init->fuzz = 255;
-    init->maximum = 65535;
-    init->minimum = 0;
-    abs.push_back(init);
-
-    // RZ
-    init = new input_absinfo();
-    init->flat = 63;
-    init->fuzz = 3;
-    init->maximum = 1023;
-    init->minimum = 0;
-    abs.push_back(init);
-
     // Z
     init = new input_absinfo();
     init->flat = 63;
@@ -67,21 +28,15 @@ bool Control::CreateController()
     libevdev_enable_event_type(dev, EV_ABS);
     libevdev_enable_event_type(dev, EV_KEY);
     int type = buttonCodes[0];
-    for (int i = 1; i < buttonCodes.size(); i++)
+    for (int i = 0; i < buttonCodes.size(); i++)
     {
-        if (buttonCodes[i] == EV_KEY)
+        if (i <= 8)
         {
-            type = EV_KEY;
-            i += 1;
+            libevdev_enable_event_code(dev, EV_ABS, buttonCodes[i], abs[i]);
         }
-        switch (type)
+        else if (i >= 8)
         {
-            case EV_ABS:
-                libevdev_enable_event_code(dev, type, buttonCodes[i], abs[i]);
-                break;
-            case EV_KEY:
-                libevdev_enable_event_code(dev, type, buttonCodes[i], NULL);
-                break;
+            libevdev_enable_event_code(dev, EV_KEY, buttonCodes[i], NULL);
         }
     }
     fd = open("/dev/uinput", O_RDWR);
