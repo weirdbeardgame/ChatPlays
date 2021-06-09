@@ -40,7 +40,7 @@ class Control
         // LStick. X, Y
         new input_absinfo
         {
-            4095,
+            32768,
             0,
             65535,
             255,
@@ -48,7 +48,7 @@ class Control
         },
         new input_absinfo
         {
-            4095,
+            32768,
             0,
             65535,
             255,
@@ -57,7 +57,7 @@ class Control
         // RStick X, Y
         new input_absinfo
         {
-            4095,
+            32768,
             0,
             65535,
             255,
@@ -65,7 +65,7 @@ class Control
         },
         new input_absinfo
         {
-            4095,
+            32768,
             0,
             65535,
             255,

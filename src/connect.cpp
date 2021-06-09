@@ -40,17 +40,16 @@ bool Connect::open(const char* hostname, char* port)
     return true;
 }
 
-bool Connect::recieve(std::vector<char> &buff)
+bool Connect::recieve(std::string &buffS)
 {
     int i = 0;
     int buffSize = 512, buffRecieved = 0;
-    buff.resize(buffSize);
+    char* buff = new char[512];
     while (buffRecieved < buffSize)
     {
         // not equal to catch neg error!!!
-        i = recv(sock, &buff[0] + buffRecieved, buffSize, 0); 
-        std::string out(buff.begin(), buff.end());
-        std::cout << out << std::endl;
+        i = recv(sock, buff + buffRecieved, buffSize, 0); 
+        std::cout << buff << std::endl;
 
         if (i == 0)
         {
@@ -63,12 +62,28 @@ bool Connect::recieve(std::vector<char> &buff)
             std::cerr << "Recieve Err: " << gai_strerror(i) << std::endl;
             return false;
         }
-        if (buff.size() < i)
+        if (buffSize < i)
         {
-            buff.resize(i);
+            buffSize = i;
+            buff = new char[buffSize];
         }
         buffRecieved += i;
+        buffSize -= i;
     }
+        buffS = buff;
+        std::cout << buffS << std::endl;
+        delete[] buff;
+        return true;
+}
+
+bool Connect::isConnected()
+{
+    return sock;
+}
+
+std::string Connect::parseCommand(std::string command)
+{
+    return strtok(command.data(), "!");
 }
 
 bool Connect::sendAll(std::string buf)

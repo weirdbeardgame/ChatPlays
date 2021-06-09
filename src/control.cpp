@@ -144,6 +144,7 @@ Buttons Control::GetCommands(std::string key)
 {
     if (commands.find(key) != commands.end())
     {
+        std::cout << "Command found" << std::endl;
         return commands[key];
     }
     else

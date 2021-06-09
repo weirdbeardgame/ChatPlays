@@ -13,7 +13,7 @@ class Twitch
     std::string password = "oauth:h0afs2o2pu7idj4feqs3krdroovobv";
     Connect connection;
     Control controller;
-    std::vector<char> buffer;
+    std::string buffer;
     public:
     bool login();
     // bool open(std::string address for other service integration like discord?
