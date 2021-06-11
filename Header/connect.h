@@ -23,6 +23,8 @@ class Connect
     bool open(const char* hostName, char* port);
     bool recieve(std::string &buff);
     bool sendAll(std::string buf);
+    bool httpGet();
+    bool httpPost();
     std::string parseCommand(std::string s);
     bool isConnected();
     void disconnect();

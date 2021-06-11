@@ -1,15 +1,28 @@
 #include <iostream>
-#include "twitch.h"
+#include "settings.h"
 
-int main()
+void twitch()
 {
-/*
-    Connect connection;
+    Twitch twitch;
+
+    bool isActive = twitch.login();
+    while(isActive)
+    {
+        isActive = twitch.update();
+    }
+}
+
+void manualControl()
+{
     Control controller;
+    Connect connection;
+    
     std::string keyCode;
     std::string delimited;
     bool input = controller.CreateController();
+
     std::cout << "Start " << input << std::endl;
+
     while(input)
     {
         std::cout << "Enter a keycode: ";
@@ -17,14 +30,31 @@ int main()
         delimited = connection.parseCommand(keyCode);
         input += controller.emit(controller.GetCommands(delimited));
     }
-    */
+}
 
-    Twitch connection;
-    bool isActive = connection.login();
 
-    while (isActive)
+int main()
+{
+    Settings settings;
+    std::string command;
+    std::cout << "Avalible Commands: " << std::endl;
+
+    if (command == "Twitch" || "twitch")
     {
-        isActive = connection.update();
+        twitch();
     }
+    else if (command == "Control" || "control")
+    {
+        manualControl();
+    }
+    if (command == "Settings" || "settings")
+    {
+        settings.init();
+    }
+    else
+    {
+        std::cerr << "Err: Unrecognized Command" << std::endl;
+    }
+
     return 0;
 }
