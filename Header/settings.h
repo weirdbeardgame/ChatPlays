@@ -18,14 +18,17 @@ class Settings
     private:
     std::fstream fileStream;
     fs::path filePath;
+    ControlInfo controllerSettings;
+    TwitchInfo twitchSettings;
     json j;
+
     public:
     Settings();
     Settings(std::string fileName);
     void init();
     void edit();
 
-    bool load(std::string fileName, std::string delimit);
+    bool load(std::string fileName, std::string delimit = " ");
     bool save(std::string fileName);
 
 };

@@ -32,29 +32,42 @@ void manualControl()
     }
 }
 
-
 int main()
 {
     Settings settings;
-    std::string command;
-    std::cout << "Avalible Commands: " << std::endl;
+    bool isActive = true;
+    char command;
 
-    if (command == "Twitch" || "twitch")
-    {
-        twitch();
-    }
-    else if (command == "Control" || "control")
-    {
-        manualControl();
-    }
-    if (command == "Settings" || "settings")
-    {
-        settings.init();
-    }
-    else
-    {
-        std::cerr << "Err: Unrecognized Command" << std::endl;
-    }
+    std::cout << "Avalible Commands: " << std::endl
+    << "t: Twitch" << std::endl
+    << "c: Manually control bot" << std::endl
+    << "s: Edit Settings" << std::endl;
 
+    settings.load("settings/settings.json");
+
+    while(isActive)
+    {
+        std::cout << "Enter Command: ";
+        std::cin >> command;
+
+        switch (command)
+        {
+            case 't':
+                twitch();
+                break;
+
+            case 'c':
+                manualControl();
+                break;
+
+            case 's':
+                settings.init();
+                break;
+
+            default:
+                std::cerr << "Err: Unrecognized Command" << std::endl;
+                break;
+        }
+    }
     return 0;
 }

@@ -7,11 +7,47 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+#include <filesystem>
 #include <linux/uinput.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
 
+#include "json.hpp"
+
 enum Buttons {UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT};
+
+using json = nlohmann::json;
+
+namespace fs = std::filesystem;
+
+struct Controller
+{
+    fs::path eventPath = "/dev/input";
+    std::string controllerName;
+    std::vector<int>buttonCodes;
+    std::vector<input_absinfo*> abs;
+
+    int fd;
+    struct libevdev *dev;
+};
+
+struct ControlInfo
+{
+    std::map<std::string, Buttons> commands;
+
+    Controller controller;
+
+    ControlInfo();
+    ControlInfo(json j);
+
+    void config();
+
+    json control;
+    void save(json &j, bool isDefault = false);
+    friend void to_json(nlohmann::json& j, const ControlInfo& p);
+    friend void from_json(const nlohmann::json& j, ControlInfo& p);
+};
+
 
 class Control
 {

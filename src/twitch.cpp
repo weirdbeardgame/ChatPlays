@@ -1,26 +1,57 @@
 #include "twitch.h"
 
-TwitchInfo::TwitchInfo(nlohmann::json j)
+TwitchInfo::TwitchInfo()
+{
+    twitch = nlohmann::json
+    {
+        "TwitchInfo" , 
+        {
+            {"userName", "USERNAME HERE"}, 
+            {"oauthToken", "OAUTH HERE"}, 
+            {"channelName", "CHANNEL_NAME HERE"}
+        }
+    };
+}
+
+
+TwitchInfo::TwitchInfo(json &j)
 {
     from_json(j, *this);
 }
 
-void TwitchInfo::to_json(nlohmann::json& j, const TwitchInfo& p)
+void TwitchInfo::save(json &j, bool isDefault)
 {
-    j
-    = nlohmann::json
-    { 
-        {"userName", p.userName}, 
-        {"oauthToken", oathToken}, 
-        {"channelName", channelName}
+    if (isDefault)
+    {
+        TwitchInfo t = TwitchInfo();
+        j.push_back(t.twitch);
+    }
+    else
+    {
+        twitch = *this;
+        j.push_back(twitch);
+        
+    }
+}
+
+void to_json(json& j, const TwitchInfo& p)
+{
+    j = nlohmann::json
+    {
+        "TwitchInfo" , 
+        {
+            {"userName", p.userName}, 
+            {"oauthToken", p.oauthToken}, 
+            {"channelName", p.channelName}
+        }
     };
 }
 
-void TwitchInfo::from_json(const nlohmann::json& j, TwitchInfo& p)
+void from_json(const nlohmann::json& j, TwitchInfo& p)
 {
-    j.at("userName").get_to(userName);
-    j.at("oauthToken").get_to(oathToken);
-    j.at(channelName).get_to(channelName);
+    j.at("userName").get_to(p.userName);
+    j.at("oauthToken").get_to(p.oauthToken);
+    j.at("channelName").get_to(p.channelName);
 }
 
 bool Twitch::login()
@@ -28,7 +59,7 @@ bool Twitch::login()
     controller.CreateController();
     if (connection.open(address.c_str(), "6697"))
     {
-        if (!connection.sendAll("PASS " + setting.oathToken + "\r\n"))
+        if (!connection.sendAll("PASS " + setting.oauthToken + "\r\n"))
         {
             return false;
         }

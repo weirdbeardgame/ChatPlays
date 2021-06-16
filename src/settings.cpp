@@ -16,18 +16,19 @@ void Settings::init()
 {
     char command;
     std::cout << "Avalible Commands are: " << std::endl;
-    std::cout << "E: Edit settings" << std::endl
-    << "Q: Quit" << std::endl; 
+    std::cout << "e: Edit settings" << std::endl
+    << "q: Quit" << std::endl; 
     std::cin >> command;
     switch (command)
     {
-        case 'E':
+        case 'e':
+            edit();
+            break;
 
-        break;
-
-        case 'Q':
+        case 'q':
             exit(0);
             break;
+
         default:
             std::cerr << "Unrecognized command" << std::endl;
             break;
@@ -36,27 +37,27 @@ void Settings::init()
 
 void Settings::edit()
 {
+    json j;
     filePath = "settings/settings.json";
-    try
+    if (!fs::exists(filePath))
     {
-        fileStream.open(filePath, std::ios::out);
+        save(filePath.string());
     }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-        //fileStream.write(filePath); // try to write new file
-     }
 }
 
 bool Settings::load(std::string fileName, std::string delimit)
 {
     filePath = fileName;
-    j = json(filePath).at(delimit);
-    
-    for(auto it = j.begin(); it != j.end(); it++)
+    if (fs::exists(filePath))
     {
-        // Parser logic here
-
+        fileStream.open(filePath, std::ios::in);
+        j = j.parse(fileStream);
+        twitchSettings = TwitchInfo(j["TwitchInfo"]); //Psudo load function?
+        controllerSettings = ControlInfo(j["ControlInfo"]);
+    }
+    else
+    {
+        save(filePath);
     }
 
     return true;
@@ -64,5 +65,22 @@ bool Settings::load(std::string fileName, std::string delimit)
 
 bool Settings::save(std::string fileName)
 {
-    filePath = fileName;
+    if (!fs::exists(filePath.parent_path()))
+    {
+        fs::create_directory(filePath.parent_path());
+    }
+    else if (!fs::exists(filePath))
+    {
+        twitchSettings.save(j, true);
+        controllerSettings.save(j, true);
+        fileStream.open(filePath, std::ios::out);
+        fileStream << std::setw(4) << j << std::endl;
+    }
+    else
+    {
+        twitchSettings.save(j);
+        controllerSettings.save(j);
+        fileStream.open(filePath, std::ios::out);
+        fileStream << std::setw(4) << j << std::endl;
+    }
 }

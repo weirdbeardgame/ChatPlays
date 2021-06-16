@@ -1,5 +1,110 @@
 #include "control.h"
 
+ControlInfo::ControlInfo()
+{
+    control = nlohmann::json
+    {
+        "ControlInfo" , 
+        {
+            {"commands", commands},
+            {"controllerName", controller.controllerName},
+            {"configuredControls", controller.buttonCodes}
+        }
+    };
+}
+
+ControlInfo::ControlInfo(json j)
+{
+    from_json(j, *this);
+}
+
+void to_json(json& j, const ControlInfo& c)
+{
+    j = json
+    {
+        "ControlInfo" , 
+        {
+            {"commands", c.commands},
+            {"controllerName", c.controller.controllerName},
+            {"configuredControls", c.controller.buttonCodes}
+        }
+    };
+}
+
+void from_json(const json& j, ControlInfo& c)
+{
+    j.at("commands").get_to(c.commands);
+    j.at("controllerName").get_to(c.controller.controllerName);
+    j.at("configuredControls").get_to(c.controller.buttonCodes);
+}
+
+void ControlInfo::save(json &j, bool isDefault)
+{
+    if (isDefault)
+    {
+        ControlInfo c = ControlInfo();
+        j.push_back(c.control);
+    }
+    else
+    {
+        j.push_back(control);
+    }
+}
+
+void ControlInfo::config()
+{
+    std::vector<Controller> controlSelect;
+    // List devices and select one to save.
+    for (auto &entry: fs::directory_iterator("/dev/input"))
+    {
+        fs::path temp = entry.path();
+        Controller createControl;
+        if (temp.string().find("event"))
+        {
+            createControl.fd = open(temp.c_str(), O_RDWR);
+            int err = libevdev_new_from_fd(createControl.fd, &createControl.dev);
+            if (err < 0)
+            {
+                // If it's just a bad file descriptor, don't bother logging, but otherwise, log it.
+                if (err != -9)
+                {
+                    printf("Failed to connect to device at %s, the error was: %s", entry.path(), strerror(-err));
+                    libevdev_free(createControl.dev);
+                    close(createControl.fd);
+                }
+            }
+            if (libevdev_has_event_type(createControl.dev, EV_KEY) && libevdev_has_event_type(createControl.dev, EV_ABS))
+            {
+                createControl.controllerName = libevdev_get_name(createControl.dev);
+                controlSelect.push_back(createControl);
+            }
+        }
+    }
+
+    bool isConfig = true;
+    int i = 0;
+    int j = 0;
+    while(isConfig)
+    {
+        for (auto& entry: controlSelect)
+        {
+            std::cout << "Avalible Controllers: " << std::endl << i + ": " << entry.controllerName << std::endl;
+            i += 1;
+        }
+        std::cout << "> ";
+        std::cin >> j;
+
+        // Does evDev have a method for detecting the currently selected ABS codes? Each controller will be different!
+        controller = controlSelect[j];
+        const input_absinfo* absX = libevdev_get_abs_info(controller.dev, ABS_X);
+        const input_absinfo* absY = libevdev_get_abs_info(controller.dev, ABS_Y);
+
+    }
+
+    // Use evdev to grab controller info. Map controls to commands.
+    controller.controllerName = libevdev_get_name(controller.dev);
+}
+
 bool Control::CreateController()
 {
     // Z
