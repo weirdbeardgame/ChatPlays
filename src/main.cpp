@@ -14,7 +14,7 @@ void twitch()
 
 void manualControl()
 {
-    Control controller;
+    Emit controller;
     Connect connection;
     
     std::string keyCode;

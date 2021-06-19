@@ -29,7 +29,7 @@ class Twitch
     std::string address = "irc.chat.twitch.tv";
     std::string pong = "PONG :tmi.twitch.tv";
     Connect connection;
-    Control controller;
+    Emit controller;
     std::string buffer;
     bool isJoined;
     public:

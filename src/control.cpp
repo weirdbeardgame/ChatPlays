@@ -1,8 +1,30 @@
 #include "control.h"
 
+Controller::Controller()
+{
+    fd = 0;
+    dev = nullptr;
+    driverVersion = 0;
+    uniqueID = std::string();
+    controllerName = std::string();
+}
+
+Controller::Controller(const Controller& c)
+{
+    fd = c.fd;
+    dev = c.dev;
+    abs = c.abs;
+    uniqueID = c.uniqueID;
+    eventPath = c.eventPath;
+    buttonCodes = c.buttonCodes;
+    driverVersion = c.driverVersion;
+    MappedControls = c.MappedControls;
+    controllerName = c.controllerName;
+}
+
 ControlInfo::ControlInfo()
 {
-    control = nlohmann::json
+    control = json
     {
         "ControlInfo" , 
         {
@@ -51,17 +73,20 @@ void ControlInfo::save(json &j, bool isDefault)
     }
 }
 
-void ControlInfo::config()
+void ControlInfo::initalConfig()
 {
-    std::vector<Controller> controlSelect;
     // List devices and select one to save.
+    std::vector<Controller> controlSelect(15);
+    uint32_t* buttonList;
     for (auto &entry: fs::directory_iterator("/dev/input"))
     {
-        fs::path temp = entry.path();
-        Controller createControl;
-        if (temp.string().find("event"))
+        Controller createControl = Controller();
+        std::string temp = entry.path().filename();
+
+        if (temp.compare(0, 5, "event") == 0)
         {
-            createControl.fd = open(temp.c_str(), O_RDWR);
+            std::cout << "Temp: " << temp << std::endl;
+            createControl.fd = open(entry.path().c_str(), O_RDWR);
             int err = libevdev_new_from_fd(createControl.fd, &createControl.dev);
             if (err < 0)
             {
@@ -72,40 +97,108 @@ void ControlInfo::config()
                     libevdev_free(createControl.dev);
                     close(createControl.fd);
                 }
+                else
+                {
+                    printf("Invalid FD \n");
+                    close(createControl.fd);
+                    return;
+                }
             }
-            if (libevdev_has_event_type(createControl.dev, EV_KEY) && libevdev_has_event_type(createControl.dev, EV_ABS))
+            if (createControl.dev != nullptr)
             {
-                createControl.controllerName = libevdev_get_name(createControl.dev);
-                controlSelect.push_back(createControl);
+                if (libevdev_has_event_type(createControl.dev, EV_KEY) && libevdev_has_event_type(createControl.dev, EV_ABS))
+                {
+                    createControl.eventPath = createControl.eventPath / temp;
+                    createControl.controllerName = libevdev_get_name(createControl.dev);
+                    controlSelect.push_back(createControl);
+                }
+            }
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    bool polling = true;
+    int j = -1;
+    if (controlSelect.size() > 0)
+    {
+        for (int i = 0; i < controlSelect.size(); i++)
+        {
+            std::cout << "Avalible Controllers " << i << ": " <<  controlSelect[i].controllerName << std::endl;
+        }
+
+        if (j < 0)
+        {
+            std::cout << "> ";
+            std::cin >> j;
+        }
+
+        // Does EvDev have a method for detecting the currently selected ABS codes? Each controller will be different!
+        controller = controlSelect[j];
+
+        buttonList  = new uint32_t[EV_MAX];
+
+        while(polling)
+        {
+            ioctl(controller.fd, EVIOCGBIT(0, sizeof(buttonList)), buttonList[0]);
+
+            for (uint32_t keyCode = 0; keyCode < EV_MAX; keyCode++)
+            {
+                if (((buttonList[0] >> keyCode) & 0x1) != EV_REP)
+                {
+                    ioctl(controller.fd, EVIOCGBIT(keyCode, sizeof(buttonList)), buttonList[keyCode]);
+                    if ((*buttonList >> keyCode) & 0x1)
+                    {
+                        switch(keyCode)
+                        {
+                            case EV_SYN:
+                                std::cout << "Sync Event" << std::endl;
+                                keyCode += 1;
+                                break;
+
+                            case EV_ABS:
+                                std::cout << libevdev_event_code_get_name(buttonList[keyCode], EV_ABS) << std::endl;
+                                controller.abs.push_back(libevdev_get_abs_info(controller.dev, buttonList[keyCode]));
+                                break;
+
+                            case EV_KEY:
+                                std::cout << libevdev_event_code_get_name(buttonList[keyCode], EV_KEY) << std::endl;
+                                controller.buttonCodes.push_back(buttonList[keyCode]);
+                                break;
+
+                            case EV_FF:
+                                std::cout << "Rumble goes brrrr" << std::endl;
+                                break;
+
+                            default:
+                                std::cerr << "No ABS or KEY FOUND" << std::endl;
+                                continue;
+                                break;
+                    }
+                }
             }
         }
     }
 
-    bool isConfig = true;
-    int i = 0;
-    int j = 0;
-    while(isConfig)
-    {
-        for (auto& entry: controlSelect)
+        /*for(std::size_t index = 0; index < controller.buttonCodes.size(); index++)
         {
-            std::cout << "Avalible Controllers: " << std::endl << i + ": " << entry.controllerName << std::endl;
-            i += 1;
-        }
-        std::cout << "> ";
-        std::cin >> j;
+            input_event ev;
+            std::cout << "Map " << controlNames[(Buttons)index] << ": ";
+            int err = libevdev_next_event(controller.dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+            if (err < 0)
+            {
+                std::cerr << "Err detecting event code: " << std::endl;
+            }
+            controller.MappedControls.emplace((Buttons)index, ev.code);
+        }*/
 
-        // Does evDev have a method for detecting the currently selected ABS codes? Each controller will be different!
-        controller = controlSelect[j];
-        const input_absinfo* absX = libevdev_get_abs_info(controller.dev, ABS_X);
-        const input_absinfo* absY = libevdev_get_abs_info(controller.dev, ABS_Y);
-
+        controller.uniqueID = libevdev_get_uniq(controller.dev);
+        controller.driverVersion = libevdev_get_driver_version(controller.dev);
     }
-
-    // Use evdev to grab controller info. Map controls to commands.
-    controller.controllerName = libevdev_get_name(controller.dev);
 }
-
-bool Control::CreateController()
+bool Emit::CreateController()
 {
     // Z
     init = new input_absinfo();
@@ -157,7 +250,7 @@ bool Control::CreateController()
     }
 }
 
-int Control::pressBtn(int button)
+int Emit::pressBtn(int button)
 {
     int emitCode = 0;
 
@@ -181,7 +274,7 @@ int Control::pressBtn(int button)
     return emitCode;
 }
 
-int Control::releaseBtn(int button)
+int Emit::releaseBtn(int button)
 {
     int emitCode = 0;
     emitCode = libevdev_uinput_write_event(uidev, EV_KEY, button, 0);
@@ -199,7 +292,7 @@ int Control::releaseBtn(int button)
     return emitCode;
 }
 
-int Control::moveABS(int ABS, int moveAxis, int flat)
+int Emit::moveABS(int ABS, int moveAxis, int flat)
 {
     int emitCode = 0;
     emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS, moveAxis);
@@ -223,7 +316,7 @@ int Control::moveABS(int ABS, int moveAxis, int flat)
     return emitCode;
 }
 
-int Control::resetABS(int ABS, int flat)
+int Emit::resetABS(int ABS, int flat)
 {
     int emitCode = 0;
     emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS, flat);
@@ -245,7 +338,7 @@ int Control::resetABS(int ABS, int flat)
     return emitCode;
 }
 
-Buttons Control::GetCommands(std::string key)
+Buttons Emit::GetCommands(std::string key)
 {
     if (commands.find(key) != commands.end())
     {
@@ -259,7 +352,7 @@ Buttons Control::GetCommands(std::string key)
 }
 
 
-bool Control::emit(Buttons keyCode)
+bool Emit::emit(Buttons keyCode)
 {
     int emitCode = 0;
     switch(keyCode)
@@ -314,7 +407,7 @@ bool Control::emit(Buttons keyCode)
     return emitCode;
 }
 
-bool Control::Close()
+bool Emit::Close()
 {
     libevdev_uinput_destroy(uidev);
     libevdev_free(dev);

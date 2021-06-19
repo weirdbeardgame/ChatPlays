@@ -65,6 +65,7 @@ bool Settings::load(std::string fileName, std::string delimit)
 
 bool Settings::save(std::string fileName)
 {
+    std::cout << "Save" << std::endl;
     if (!fs::exists(filePath.parent_path()))
     {
         fs::create_directory(filePath.parent_path());
@@ -72,6 +73,7 @@ bool Settings::save(std::string fileName)
     else if (!fs::exists(filePath))
     {
         twitchSettings.save(j, true);
+        controllerSettings.initalConfig();
         controllerSettings.save(j, true);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;

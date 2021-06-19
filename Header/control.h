@@ -20,12 +20,38 @@ using json = nlohmann::json;
 
 namespace fs = std::filesystem;
 
+static std::map<Buttons, std::string> controlNames = 
+{
+    {UP, "UP"},
+    {DOWN, "DOWN"},
+    {LEFT, "LEFT"},
+    {RIGHT, "RIGHT"},
+    {A, "A"},
+    {B, "B"},
+    {X, "X"},
+    {Y, "Y"},
+    {START, "START"},
+    {SELECT, "SELECT"},
+    {L1, "L1"},
+    {R1, "R1"},
+    {L2, "L2"},
+    {R2, "R2"},
+    {L3, "L3"},
+    {R3, "R3"}
+};
+
 struct Controller
 {
+    Controller();
+    Controller(const Controller& c);
+
     fs::path eventPath = "/dev/input";
     std::string controllerName;
-    std::vector<int>buttonCodes;
-    std::vector<input_absinfo*> abs;
+    std::vector<uint32_t>buttonCodes;
+    std::map<Buttons, uint32_t> MappedControls;
+    std::vector<const input_absinfo*> abs;
+    std::string uniqueID;
+    int driverVersion;
 
     int fd;
     struct libevdev *dev;
@@ -40,7 +66,7 @@ struct ControlInfo
     ControlInfo();
     ControlInfo(json j);
 
-    void config();
+    void initalConfig();
 
     json control;
     void save(json &j, bool isDefault = false);
@@ -49,7 +75,7 @@ struct ControlInfo
 };
 
 
-class Control
+class Emit
 {
     private:
     std::vector<int>buttonCodes = 
