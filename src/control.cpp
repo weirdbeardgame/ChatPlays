@@ -77,7 +77,7 @@ void ControlInfo::initalConfig()
 {
     // List devices and select one to save.
     std::vector<Controller> controlSelect(15);
-    uint32_t* buttonList;
+    uint32_t* supportedEvents;
     for (auto &entry: fs::directory_iterator("/dev/input"))
     {
         Controller createControl = Controller();
@@ -110,7 +110,14 @@ void ControlInfo::initalConfig()
                 {
                     createControl.eventPath = createControl.eventPath / temp;
                     createControl.controllerName = libevdev_get_name(createControl.dev);
-                    controlSelect.push_back(createControl);
+                    if (createControl.controllerName != std::string() || createControl.controllerName != "")
+                    {
+                        controlSelect.push_back(createControl);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
             }
         }
@@ -138,34 +145,47 @@ void ControlInfo::initalConfig()
         // Does EvDev have a method for detecting the currently selected ABS codes? Each controller will be different!
         controller = controlSelect[j];
 
-        buttonList  = new uint32_t[EV_MAX];
+        supportedEvents  = new uint32_t[EV_MAX];
+        uint32_t* buttonTemp = new uint32_t[KEY_MAX];
 
         while(polling)
         {
-            ioctl(controller.fd, EVIOCGBIT(0, sizeof(buttonList)), buttonList[0]);
+            ioctl(controller.fd, EVIOCGBIT(0, sizeof(supportedEvents)), supportedEvents[0]);
 
-            for (uint32_t keyCode = 0; keyCode < EV_MAX; keyCode++)
+            for (uint32_t evType = 0; evType < EV_MAX; evType++)
             {
-                if (((buttonList[0] >> keyCode) & 0x1) != EV_REP)
+                printf("evType: 0x%2x\n", evType);
+                if (((supportedEvents[0] >> evType) & 0x1) != EV_REP)
                 {
-                    ioctl(controller.fd, EVIOCGBIT(keyCode, sizeof(buttonList)), buttonList[keyCode]);
-                    if ((*buttonList >> keyCode) & 0x1)
+                    ioctl(controller.fd, EVIOCGBIT(evType, EV_MAX), supportedEvents[evType]);
+                    switch(evType)
                     {
-                        switch(keyCode)
-                        {
-                            case EV_SYN:
-                                std::cout << "Sync Event" << std::endl;
-                                keyCode += 1;
-                                break;
+                        case EV_SYN:
+                            std::cout << "Sync Event" << std::endl;
+                            break;
 
                             case EV_ABS:
-                                std::cout << libevdev_event_code_get_name(buttonList[keyCode], EV_ABS) << std::endl;
-                                controller.abs.push_back(libevdev_get_abs_info(controller.dev, buttonList[keyCode]));
+                                for (int i = 0; i < ABS_MAX; i++)
+                                {
+                                    input_absinfo* absTemp = new input_absinfo[ABS_MAX];
+                                    ioctl(controller.fd, EVIOCGABS(i), absTemp);
+                                    if (absTemp != nullptr && absTemp->maximum > 0)
+                                    {
+                                        controller.abs.push_back(absTemp);
+                                    }
+                                }
                                 break;
 
                             case EV_KEY:
-                                std::cout << libevdev_event_code_get_name(buttonList[keyCode], EV_KEY) << std::endl;
-                                controller.buttonCodes.push_back(buttonList[keyCode]);
+                                ioctl(controller.fd, EVIOCGBIT(0, KEY_MAX), buttonTemp);
+                                for (uint32_t i = 0; i < KEY_MAX; i++)
+                                {
+                                    if ((*buttonTemp >> i) & 0x1)
+                                    {
+                                        std::cout << libevdev_event_code_get_name(buttonTemp[i], EV_KEY) << std::endl;
+                                        controller.buttonCodes.push_back(buttonTemp[i]);
+                                    }
+                                }
                                 break;
 
                             case EV_FF:
@@ -173,12 +193,21 @@ void ControlInfo::initalConfig()
                                 break;
 
                             default:
-                                std::cerr << "No ABS or KEY FOUND" << std::endl;
                                 continue;
                                 break;
-                    }
                 }
             }
+        }
+        delete[] buttonTemp;
+        delete[] supportedEvents;
+        if(controller.buttonCodes.size() > 0 && controller.abs.size() > 0)
+        {
+            polling = false;
+        }
+        else
+        {
+            std::cerr << "Controller polling error!" << std::endl;
+            return;
         }
     }
 

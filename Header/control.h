@@ -49,7 +49,7 @@ struct Controller
     std::string controllerName;
     std::vector<uint32_t>buttonCodes;
     std::map<Buttons, uint32_t> MappedControls;
-    std::vector<const input_absinfo*> abs;
+    std::vector<input_absinfo*> abs;
     std::string uniqueID;
     int driverVersion;
 
