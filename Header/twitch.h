@@ -1,8 +1,14 @@
 #pragma once
 #include <iostream>
 #include <stdio.h>
+#ifdef __linux__ 
 #include "control.h"
 #include "connect.h"
+#elif _WIN32
+#include "Windows/winConnect.h"
+#include "Windows/control.h"
+#endif
+
 #include "json.hpp"
 
 using json = nlohmann::json;

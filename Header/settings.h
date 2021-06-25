@@ -6,7 +6,14 @@
 #include <vector>
 #include <map>
 
+#ifdef __linux__ 
 #include "control.h"
+#include "connect.h"
+#elif _WIN32
+#include "Windows/winConnect.h"
+#include "Windows/control.h"
+#endif
+
 #include "twitch.h"
 #include "json.hpp"
 
