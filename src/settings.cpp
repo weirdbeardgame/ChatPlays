@@ -53,7 +53,7 @@ bool Settings::load(std::string fileName, std::string delimit)
         fileStream.open(filePath, std::ios::in);
         j = j.parse(fileStream);
         twitchSettings = TwitchInfo(j["TwitchInfo"]); //Psudo load function?
-        controllerSettings = ControlInfo(j["ControlInfo"]);
+        controllerSettings = Emit(j["Emit"]);
     }
     else
     {

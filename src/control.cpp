@@ -16,56 +16,34 @@ Controller::Controller(const Controller& c)
     abs = c.abs;
     uniqueID = c.uniqueID;
     eventPath = c.eventPath;
-    buttonCodes = c.buttonCodes;
     driverVersion = c.driverVersion;
-    MappedControls = c.MappedControls;
+    mappedControls = c.mappedControls;
     controllerName = c.controllerName;
 }
 
-ControlInfo::ControlInfo()
+Emit::Emit()
 {
     control = json
     {
-        "ControlInfo" , 
+        "Emit" , 
         {
             {"commands", commands},
-            {"controllerName", controller.controllerName},
-            {"configuredControls", controller.buttonCodes}
+            {"controller", controller},
         }
     };
 }
 
-ControlInfo::ControlInfo(json j)
+Emit::Emit(json j)
 {
     from_json(j, *this);
 }
 
-void to_json(json& j, const ControlInfo& c)
-{
-    j = json
-    {
-        "ControlInfo" , 
-        {
-            {"commands", c.commands},
-            {"controllerName", c.controller.controllerName},
-            {"configuredControls", c.controller.buttonCodes}
-        }
-    };
-}
-
-void from_json(const json& j, ControlInfo& c)
-{
-    j.at("commands").get_to(c.commands);
-    j.at("controllerName").get_to(c.controller.controllerName);
-    j.at("configuredControls").get_to(c.controller.buttonCodes);
-}
-
-void ControlInfo::save(json &j, bool isDefault)
+void Emit::save(json &j, bool isDefault)
 {
     if (isDefault)
     {
-        ControlInfo c = ControlInfo();
-        j.push_back(c.control);
+        Emit e = Emit();
+        j.push_back(e.control);
     }
     else
     {
@@ -73,7 +51,7 @@ void ControlInfo::save(json &j, bool isDefault)
     }
 }
 
-void ControlInfo::initalConfig()
+void Emit::initalConfig()
 {
     // List devices and select one to save.
     std::vector<Controller> controlSelect(15);
@@ -167,23 +145,64 @@ void ControlInfo::initalConfig()
                             case EV_ABS:
                                 for (int i = 0; i < ABS_MAX; i++)
                                 {
-                                    input_absinfo* absTemp = new input_absinfo[ABS_MAX];
+                                    input_absinfo absTemp;
                                     ioctl(controller.fd, EVIOCGABS(i), absTemp);
-                                    if (absTemp != nullptr && absTemp->maximum > 0)
+                                    if (absTemp.maximum > 0)
                                     {
                                         controller.abs.push_back(absTemp);
                                     }
                                 }
+
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    input_event ev;
+                                    bool map = true;
+                                    std::cout << "Map: " << controlNames[(Buttons)i] << ": ";
+                                    while (map)
+                                    {
+                                        int err = read(controller.fd, &ev, sizeof(input_event));
+                                        if (err < 0)
+                                        {
+                                            std::cerr << "Failed read: " << strerror(-err) << std::endl;
+                                        }
+                                        if (ev.type == EV_ABS)
+                                        {
+                                            printf("ev: 0x%02x", ev.code + '\n');
+                                            controller.mappedControls.emplace((Buttons)i, ev);
+                                            map = false;
+                                        }
+                                        else
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                }
+
                                 break;
 
                             case EV_KEY:
-                                ioctl(controller.fd, EVIOCGBIT(0, KEY_MAX), buttonTemp);
-                                for (uint32_t i = 0; i < KEY_MAX; i++)
+                                for(std::size_t index = 3; index < controlNames.size(); index++)
                                 {
-                                    if ((*buttonTemp >> i) & 0x1)
+                                    input_event ev;
+                                    bool map = true;
+                                    while (map)
                                     {
-                                        std::cout << libevdev_event_code_get_name(buttonTemp[i], EV_KEY) << std::endl;
-                                        controller.buttonCodes.push_back(buttonTemp[i]);
+                                        std::cout << "Map " << controlNames[(Buttons)index] << ": ";
+                                        int err = read(controller.fd, &ev, sizeof(input_event));
+                                        if (err < 0)
+                                        {
+                                            std::cerr << "Failed read: " << strerror(-err) << std::endl;
+                                        }
+                                        if (ev.type == EV_KEY)
+                                        {
+                                            printf("ev: 0x%02x", ev.code + '\n');
+                                            controller.mappedControls.emplace((Buttons)index, ev);
+                                            map = false;
+                                        }
+                                        else
+                                        {
+                                            continue;
+                                        }
                                     }
                                 }
                                 break;
@@ -200,7 +219,7 @@ void ControlInfo::initalConfig()
         }
         delete[] buttonTemp;
         delete[] supportedEvents;
-        if(controller.buttonCodes.size() > 0 && controller.abs.size() > 0)
+        if(controller.mappedControls.size() > 0 && controller.abs.size() > 0)
         {
             polling = false;
         }
@@ -211,59 +230,25 @@ void ControlInfo::initalConfig()
         }
     }
 
-        /*for(std::size_t index = 0; index < controller.buttonCodes.size(); index++)
-        {
-            input_event ev;
-            std::cout << "Map " << controlNames[(Buttons)index] << ": ";
-            int err = libevdev_next_event(controller.dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &ev);
-            if (err < 0)
-            {
-                std::cerr << "Err detecting event code: " << std::endl;
-            }
-            controller.MappedControls.emplace((Buttons)index, ev.code);
-        }*/
-
-        controller.uniqueID = libevdev_get_uniq(controller.dev);
-        controller.driverVersion = libevdev_get_driver_version(controller.dev);
+    controller.uniqueID = libevdev_get_uniq(controller.dev);
+    controller.driverVersion = libevdev_get_driver_version(controller.dev);
     }
 }
 bool Emit::CreateController()
 {
-    // Z
-    init = new input_absinfo();
-    init->flat = 63;
-    init->fuzz = 3;
-    init->maximum = 1023;
-    init->minimum = 0;
-    abs.push_back(init);
-
-    // DPad X, Y
-    init = new input_absinfo();
-    init->value = 0;
-    init->maximum = 1;
-    init->minimum = -1;
-    abs.push_back(init);
-
-    init = new input_absinfo();
-    init->value = 0;
-    init->maximum = 1;
-    init->minimum = -1;
-    abs.push_back(init);
-
     dev = libevdev_new();
-    libevdev_set_name(dev, "8BitDo SN30 Pro+");
+    libevdev_set_name(dev, controller.controllerName.c_str());
     libevdev_enable_event_type(dev, EV_ABS);
     libevdev_enable_event_type(dev, EV_KEY);
-    int type = buttonCodes[0];
-    for (int i = 0; i < buttonCodes.size(); i++)
+    for (int i = 0; i < controller.mappedControls.size(); i++)
     {
         if (i <= 7)
         {
-            libevdev_enable_event_code(dev, EV_ABS, buttonCodes[i], abs[i]);
+            libevdev_enable_event_code(dev, EV_ABS, controller.mappedControls[(Buttons)i].type, &controller.abs[i]);
         }
         else if (i > 7)
         {
-            libevdev_enable_event_code(dev, EV_KEY, buttonCodes[i], NULL);
+            libevdev_enable_event_code(dev, EV_KEY, controller.mappedControls[(Buttons)i].type, NULL);
         }
     }
     fd = open("/dev/uinput", O_RDWR);
@@ -380,52 +365,27 @@ Buttons Emit::GetCommands(std::string key)
     }
 }
 
-
 bool Emit::emit(Buttons keyCode)
 {
     int emitCode = 0;
     switch(keyCode)
     {
     case Buttons::UP:
-        emitCode = moveABS(ABS_Y, 65535, 4095);
+        emitCode = moveABS(controller.mappedControls[keyCode].code, controller.mappedControls[keyCode].value, 4095);
         break;
     case Buttons::DOWN:
         // Dpad Down
-        emitCode = moveABS(ABS_Y, 0, 4095);
+        emitCode = moveABS(controller.mappedControls[keyCode].code, controller.mappedControls[keyCode].value, 4095);
         break;
 
     case Buttons::LEFT:
         // Dpad Left
-        emitCode = moveABS(ABS_X, 0, 4095);
+        emitCode = moveABS(controller.mappedControls[keyCode].code, controller.mappedControls[keyCode].value, 4095);
         break;
 
     case Buttons::RIGHT:
         // Dpad Right
-        emitCode = moveABS(ABS_X, 65535, 4095);
-        break;
-
-    case Buttons::A:
-        emitCode = pressBtn(BTN_SOUTH);
-        break;
-
-    case Buttons::B:
-        emitCode = pressBtn(BTN_EAST);
-        break;
-
-    case Buttons::X:
-        emitCode = pressBtn(BTN_WEST);
-        break;
-
-    case Buttons::Y:
-        emitCode = pressBtn(BTN_NORTH);
-        break;
-
-    case Buttons::START:
-        emitCode = pressBtn(BTN_TR);
-        break;
-
-    case Buttons::SELECT:
-        emitCode = pressBtn(BTN_TL);
+        emitCode = moveABS(controller.mappedControls[keyCode].code, controller.mappedControls[keyCode].value, 4095);
         break;
 
     case Buttons::EXIT: 
@@ -433,6 +393,7 @@ bool Emit::emit(Buttons keyCode)
         return emitCode;
         break;
     }
+    emitCode = pressBtn(controller.mappedControls[keyCode].code);
     return emitCode;
 }
 
@@ -441,4 +402,112 @@ bool Emit::Close()
     libevdev_uinput_destroy(uidev);
     libevdev_free(dev);
     return 0;
+}
+
+void to_json(json& j, const input_absinfo& c)
+{
+    j = json
+    {
+        "input_absinfo",
+        {
+            {"value", c.value},
+            {"flat", c.flat},
+            {"fuzz", c.fuzz},
+            {"maximum", c.maximum},
+            {"minimum", c.minimum},
+            {"resolution", c.resolution}
+        }
+    };
+}
+
+void from_json(const json& j, input_absinfo& c)
+{
+    j.at("value").get_to(c.value);
+    j.at("flat").get_to(c.flat);
+    j.at("fuzz").get_to(c.fuzz);
+    j.at("maximum").get_to(c.maximum);
+    j.at("minimum").get_to(c.minimum);
+    j.at("resolution").get_to(c.resolution);
+}
+
+void to_json(json& j, const timeval& t)
+{
+    j = json
+    {
+        {"tv_sec", t.tv_sec},
+        {"tv_usec", t.tv_usec},
+    };
+}
+
+void from_json(const json& j, timeval& t)
+{
+    j.at("tv_sec").get_to(t.tv_sec);
+    j.at("tv_usec").get_to(t.tv_usec);
+}
+
+
+void to_json(json& j, const input_event& e)
+{
+    j = json
+    {
+        {"type", e.type},
+        {"code", e.code},
+        {"value", e.value},
+        {"time", e.time},
+    };
+}
+
+void from_json(const json& j, input_event& e)
+{
+    j.at("type").get_to(e.type);
+    j.at("code").get_to(e.code);
+    j.at("value").get_to(e.value);
+    j.at("time").get_to(e.time);
+}
+
+
+void to_json(json& j, const Emit& c)
+{
+    j = json
+    {
+        "ControlInfo" , 
+        {
+            {"commands", c.commands},
+            {"controller", c.controller},
+        }
+    };
+}
+
+void from_json(const json& j, Emit& c)
+{
+    j.at("commands").get_to(c.commands);
+    j.at("controller").get_to(c.controller);
+}
+
+void to_json(json& j, const Controller& c)
+{
+    j = json
+    {
+        "Controller",
+        {
+            {"fd", c.fd},
+            {"uniqueID", c.uniqueID},
+            {"driverVersion", c.driverVersion},
+            {"controllerName", c.controllerName},
+            {"mappedControls", c.mappedControls},
+        }
+    };
+    for (int i = 0; i < c.abs.size(); i++)
+    {
+        j.push_back(c.abs[i]);
+    }
+}
+
+void from_json(const nlohmann::json& j, Controller& c)
+{
+    j.at("fd").get_to(c.fd);
+    j.at("uniqueID").get_to(c.uniqueID);
+    j.at("driverVersion").get_to(c.driverVersion);
+    j.at("controllerName").get_to(c.controllerName);
+    j.at("mappedControls").get_to(c.mappedControls);
 }

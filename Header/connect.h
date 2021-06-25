@@ -1,13 +1,15 @@
 #pragma once
-#include <iostream>
-#include <stdio.h>
-#include <netdb.h>
-#include <vector>
+#include <filesystem>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
+#include <iostream>
+#include <stdio.h>
+#include <netdb.h>
+#include <vector>
 
+namespace fs = std::filesystem;
 
 class Connect
 {
@@ -21,6 +23,7 @@ class Connect
 
     public:
     bool open(const char* hostName, char* port);
+    bool openSockFile(fs::path socket, int slot);
     bool recieve(std::string &buff);
     bool sendAll(std::string buf);
     bool httpGet();

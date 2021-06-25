@@ -18,7 +18,7 @@ class Settings
     private:
     std::fstream fileStream;
     fs::path filePath;
-    ControlInfo controllerSettings;
+    Emit controllerSettings;
     TwitchInfo twitchSettings;
     json j;
 

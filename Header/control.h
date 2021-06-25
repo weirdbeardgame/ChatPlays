@@ -47,118 +47,32 @@ struct Controller
 
     fs::path eventPath = "/dev/input";
     std::string controllerName;
-    std::vector<uint32_t>buttonCodes;
-    std::map<Buttons, uint32_t> MappedControls;
-    std::vector<input_absinfo*> abs;
+    std::map<Buttons, input_event> mappedControls;
+    std::vector<input_absinfo> abs;
     std::string uniqueID;
     int driverVersion;
 
     int fd;
     struct libevdev *dev;
+
+    friend void to_json(nlohmann::json& j, const Controller& p);
+    friend void from_json(const nlohmann::json& j, Controller& p);
+
 };
-
-struct ControlInfo
-{
-    std::map<std::string, Buttons> commands;
-
-    Controller controller;
-
-    ControlInfo();
-    ControlInfo(json j);
-
-    void initalConfig();
-
-    json control;
-    void save(json &j, bool isDefault = false);
-    friend void to_json(nlohmann::json& j, const ControlInfo& p);
-    friend void from_json(const nlohmann::json& j, ControlInfo& p);
-};
-
 
 class Emit
 {
     private:
-    std::vector<int>buttonCodes = 
-    {
-        ABS_X,
-        ABS_Y,
-        ABS_RX,
-        ABS_RY,
-        ABS_RZ,
-        ABS_Z,
-        ABS_HAT0X,
-        ABS_HAT0Y,
-        BTN_SOUTH,
-        BTN_EAST,
-        BTN_C,
-        BTN_NORTH,
-        BTN_WEST,
-        BTN_Z,
-        BTN_TR,
-        BTN_TL
-    };
-    struct std::vector<input_absinfo*> abs
-    {
-        // LStick. X, Y
-        new input_absinfo
-        {
-            32768,
-            0,
-            65535,
-            255,
-            4095
-        },
-        new input_absinfo
-        {
-            32768,
-            0,
-            65535,
-            255,
-            4095
-        },
-        // RStick X, Y
-        new input_absinfo
-        {
-            32768,
-            0,
-            65535,
-            255,
-            4095
-        },
-        new input_absinfo
-        {
-            32768,
-            0,
-            65535,
-            255,
-            4095
-        },
-        // RZ, Z
-        new input_absinfo
-        {
-            63,
-            0,
-            1023,
-            255,
-            63
-        },
-        new input_absinfo
-        {
-            63,
-            0,
-            1023,
-            255,
-            63
-        }
-    };
-
     int fd = 0;
     int maxInput = 0;
+
     struct libevdev *dev;
     struct uinput_user_dev device;
     struct uinput_setup usetup;
     struct libevdev_uinput *uidev;
     struct input_absinfo* init;
+
+    Controller controller;
     std::map<std::string, Buttons> commands
     {
         {"UP", UP},
@@ -181,7 +95,17 @@ class Emit
     };
     std::queue<Buttons>controlQueue;
     public:
+    Emit();
+    Emit(json j);
+
+    void initalConfig();
     Buttons GetCommands(std::string key);
+
+    json control;
+    void save(json &j, bool isDefault = false);
+    friend void to_json(nlohmann::json& j, const Emit& p);
+    friend void from_json(const nlohmann::json& j, Emit& p);
+
     bool CreateController();
     bool emit(Buttons cmd);
     int moveABS(int ABS, int moveAxis, int flat);
