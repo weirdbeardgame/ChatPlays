@@ -1,7 +1,10 @@
 #pragma once
+#include <filesystem>
 #include <Windows.h>
 #include <iostream>
+#include <cstdint>
 #include <json.hpp>
+#include <vjoyinterface.h>
 #include <map>
 
 enum Buttons { UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT };
@@ -33,7 +36,7 @@ static std::map<Buttons, std::string> controlNames =
 class Emit
 {
 private:
-    int fd;
+    UINT dStat;
 public:
     Emit();
     Emit(json j);
