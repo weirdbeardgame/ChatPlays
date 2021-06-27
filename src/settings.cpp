@@ -57,9 +57,8 @@ bool Settings::load(std::string fileName, std::string delimit)
     }
     else
     {
-        save(filePath);
+        save(filePath.string());
     }
-
     return true;
 }
 
@@ -77,6 +76,7 @@ bool Settings::save(std::string fileName)
         controllerSettings.save(j, true);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
+        return fileStream.fail();
     }
     else
     {
@@ -84,5 +84,6 @@ bool Settings::save(std::string fileName)
         controllerSettings.save(j);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
+        return fileStream.fail();
     }
 }

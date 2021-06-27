@@ -35,6 +35,9 @@
     <ClCompile Include="src\Windows\winConnect.cpp">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\Windows\control.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\ipc.h">
@@ -46,14 +49,23 @@
     <ClInclude Include="header\twitch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="3rdparty\json.hpp">
-      <Filter>3rdParty</Filter>
-    </ClInclude>
     <ClInclude Include="Header\Windows\winConnect.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>
     <ClInclude Include="Header\Windows\control.h">
       <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\windows\inc\gen-versioninfo.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\windows\inc\public.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\windows\inc\vjoyinterface.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\json.hpp">
+      <Filter>3rdParty</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

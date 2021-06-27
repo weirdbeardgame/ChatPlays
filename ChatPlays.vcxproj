@@ -71,7 +71,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>C:\Users\final\source\repos\ChatPlays\3rdparty;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>C:\Users\final\source\repos\ChatPlays\3rdparty;C:\Users\final\source\repos\ChatPlays\3rdparty\windows\inc;$(ExternalIncludePath)</ExternalIncludePath>
     <ExcludePath>C:\Users\final\source\repos\ChatPlays\src\Linux;C:\Users\final\source\repos\ChatPlays\Header\Linux;$(ExcludePath)</ExcludePath>
     <IncludePath>C:\Users\final\source\repos\ChatPlays\Header;$(IncludePath)</IncludePath>
   </PropertyGroup>
@@ -110,7 +110,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;3rdparty/windows/lib/vJoyInterface.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -118,10 +118,14 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\twitch.cpp" />
+    <ClCompile Include="src\Windows\control.cpp" />
     <ClCompile Include="src\Windows\winConnect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdparty\json.hpp" />
+    <ClInclude Include="3rdparty\windows\inc\gen-versioninfo.h" />
+    <ClInclude Include="3rdparty\windows\inc\public.h" />
+    <ClInclude Include="3rdparty\windows\inc\vjoyinterface.h" />
     <ClInclude Include="header\ipc.h" />
     <ClInclude Include="header\settings.h" />
     <ClInclude Include="header\twitch.h" />
