@@ -91,7 +91,7 @@ int Emit::CreateController()
 	controller.bDevice = (BYTE)dStat;
 }
 
-bool Emit::emit(Buttons cmd)
+bool Emit::emit(Buttons& cmd)
 {
 	axisData axis;
 	switch (cmd)
@@ -115,27 +115,34 @@ bool Emit::emit(Buttons cmd)
 	{
 		return pressBtn(cmd);
 	}
+	else
+	{
+		moveABS(axis);
+		Sleep(1);
+		resetABS();
+	}
 }
 
-int Emit::pressBtn(Buttons btn)
+int Emit::pressBtn(Buttons& btn)
 {
-	JOYSTICK_POSITION pos;
-	pos.lButtons |= 1 << buttonPos[btn];
-	UpdateVJD(dStat, &pos);
-	Sleep(1);
-	return releaseBtn(btn);
+	return SetBtn(TRUE, dStat, buttonPos[btn]);
+	//Sleep(1);
+	//return ResetButtons(buttonPos[btn]);
 }
 
-int Emit::releaseBtn(Buttons btn)
+int Emit::releaseBtn(Buttons& btn)
 {
 	JOYSTICK_POSITION pos;
+	memset(&pos, 0, sizeof(pos));
 	pos.lButtons &= ~(1 << buttonPos[btn]);
+	btn = Buttons::CLEAR;
 	return UpdateVJD(dStat, &pos);
 }
 
 int Emit::moveABS(axisData axis)
 {
 	JOYSTICK_POSITION pos;
+	memset(&pos, 0, sizeof(pos));
 	pos.wAxisX = axis.get(0);
 	pos.wAxisY = axis.get(1);
 	pos.wAxisVX = axis.get(2);
@@ -145,12 +152,14 @@ int Emit::moveABS(axisData axis)
 
 int Emit::resetABS()
 {
-	ResetAll();
-	return 0;
+	JOYSTICK_POSITION pos;
+	memset(&pos, 0, sizeof(pos));
+	return UpdateVJD(dStat, &pos);
 }
 
-Buttons Emit::GetCommands(std::string key)
+Buttons& Emit::GetCommands(std::string key)
 {
+	Buttons c = CLEAR;
 	if (commands.find(key) != commands.end())
 	{
 		std::cout << "Command found" << std::endl;
@@ -158,6 +167,6 @@ Buttons Emit::GetCommands(std::string key)
 	}
 	else
 	{
-		return Buttons(-1);
+		return c;
 	}
 }

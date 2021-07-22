@@ -7,7 +7,7 @@
 #include <map>
 #include <vjoyinterface.h>
 
-enum Buttons { UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT };
+enum Buttons { UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT, CLEAR };
 
 using json = nlohmann::json;
 
@@ -79,7 +79,7 @@ public:
     Emit(json j);
 
     void initalConfig();
-    Buttons GetCommands(std::string key);
+    Buttons& GetCommands(std::string key);
 
     json control;
     void save(json& j, bool isDefault = false);
@@ -87,9 +87,9 @@ public:
     friend void from_json(const nlohmann::json& j, Emit& p);
 
     int CreateController();
-    bool emit(Buttons cmd);
+    bool emit(Buttons& cmd);
     int moveABS(axisData axis);
     int resetABS();
-    int pressBtn(Buttons btn);
-    int releaseBtn(Buttons btn);
+    int pressBtn(Buttons& btn);
+    int releaseBtn(Buttons& btn);
 };
