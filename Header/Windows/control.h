@@ -1,32 +1,34 @@
 #pragma once
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <filesystem>
-#include <Windows.h>
+#include <Xinput.h>
+#include <ViGEm/Client.h>
 #include <iostream>
 #include <cstdint>
 #include "json.hpp"
 #include <map>
-#include <vjoyinterface.h>
 
-enum Buttons { UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT, CLEAR };
+#pragma comment(lib, "setupapi.lib")
+
+enum Buttons { UP, DOWN, LEFT, RIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT, CLEAR };
 
 using json = nlohmann::json;
 
 namespace fs = std::filesystem;
 
-static std::map<Buttons, uint32_t> buttonPos =
+static std::map<Buttons, uint16_t> buttonPos =
 {
-    {A, 0},
-    {B, 1},
-    {X, 2},
-    {Y, 3},
-    {START, 4},
-    {SELECT, 5},
-    {L1, 6},
-    {R1, 7},
-    {L2, 8},
-    {R2, 9},
-    {L3, 10},
-    {R3, 11}
+    {A, XUSB_GAMEPAD_A},
+    {B, XUSB_GAMEPAD_B},
+    {X, XUSB_GAMEPAD_X},
+    {Y, XUSB_GAMEPAD_Y},
+    {START, XUSB_GAMEPAD_START},
+    {SELECT, XUSB_GAMEPAD_BACK},
+    {L1, XUSB_GAMEPAD_LEFT_SHOULDER},
+    {R1, XUSB_GAMEPAD_RIGHT_SHOULDER},
+    {L3, XUSB_GAMEPAD_LEFT_THUMB},
+    {R3, XUSB_GAMEPAD_RIGHT_THUMB}
 };
 
 static std::map<std::string, Buttons> commands
@@ -73,7 +75,10 @@ class Emit
 {
 private:
     int dStat;
-    _JOYSTICK_POSITION_V3 controller;
+    // I need Xinput
+    PXUSB_REPORT report;
+    PVIGEM_CLIENT driver;
+    PVIGEM_TARGET xbox;
 public:
     Emit();
     Emit(json j);

@@ -1,0 +1,3 @@
+[submodule "3rdparty/windows/ViGEmClient"]
+	path = 3rdparty/windows/ViGEmClient
+	url = git@github.com:ViGEm/ViGEmClient.git

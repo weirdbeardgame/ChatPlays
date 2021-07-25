@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -108,9 +108,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\final\source\repos\ChatPlays\3rdparty\windows\ViGEmClient\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;3rdparty/windows/lib/vJoyInterface.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -123,14 +124,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdparty\json.hpp" />
-    <ClInclude Include="3rdparty\windows\inc\gen-versioninfo.h" />
-    <ClInclude Include="3rdparty\windows\inc\public.h" />
-    <ClInclude Include="3rdparty\windows\inc\vjoyinterface.h" />
     <ClInclude Include="header\ipc.h" />
     <ClInclude Include="header\settings.h" />
     <ClInclude Include="header\twitch.h" />
     <ClInclude Include="Header\Windows\control.h" />
     <ClInclude Include="Header\Windows\winConnect.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="3rdparty\windows\ViGEmClient\src\ViGEmClient.vcxproj">
+      <Project>{7db06674-1f4f-464b-8e1c-172e9587f9dc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

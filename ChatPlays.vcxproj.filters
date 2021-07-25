@@ -55,15 +55,6 @@
     <ClInclude Include="Header\Windows\control.h">
       <Filter>Header Files\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="3rdparty\windows\inc\gen-versioninfo.h">
-      <Filter>3rdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdparty\windows\inc\public.h">
-      <Filter>3rdParty</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdparty\windows\inc\vjoyinterface.h">
-      <Filter>3rdParty</Filter>
-    </ClInclude>
     <ClInclude Include="3rdparty\json.hpp">
       <Filter>3rdParty</Filter>
     </ClInclude>
