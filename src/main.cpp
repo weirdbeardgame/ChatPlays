@@ -43,7 +43,7 @@ int main()
     << "c: Manually control bot" << std::endl
     << "s: Edit Settings" << std::endl;
 
-    settings.load("settings/settings.json");
+    //settings.load("settings/settings.json");
 
     while(isActive)
     {

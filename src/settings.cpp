@@ -71,9 +71,9 @@ bool Settings::save(std::string fileName)
     }
     else if (!fs::exists(filePath))
     {
-        //twitchSettings.save(j, true);
-        controllerSettings.initalConfig();
-        controllerSettings.save(j, true);
+        twitchSettings.save(j, true);
+        //controllerSettings.initalConfig();
+        //controllerSettings.save(j, true);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();

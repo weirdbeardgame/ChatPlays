@@ -7,8 +7,8 @@
 #include <map>
 
 #ifdef __linux__ 
-#include "control.h"
-#include "connect.h"
+#include "Linux/control.h"
+#include "Linux/connect.h"
 #elif _WIN32
 #include "Windows/winConnect.h"
 #include "Windows/control.h"

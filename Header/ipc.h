@@ -1,7 +1,7 @@
 #pragma once
 #ifdef __linux__ 
-#include "control.h"
-#include "connect.h"
+#include "Linux/control.h"
+#include "Linux/connect.h"
 #elif _WIN32
 #include "Windows/winConnect.h"
 #include "Windows/control.h"
@@ -13,7 +13,7 @@ class IPC
     Connect connect;
     std::vector<uint32_t> mem;
     public:
-    bool open(fs::path socketPath, char* slot);
+    bool open(fs::path socketPath, int slot);
 
     uint8_t read8();
     uint16_t read16();
