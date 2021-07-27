@@ -1,6 +1,6 @@
 #include "Windows/winConnect.h"
 
-bool Connect::open(const char* hostName, char* port)
+bool Connect::open(const char* hostName, char port)
 {
     WSADATA winSockData;
     if (WSAStartup(MAKEWORD(2, 2), &winSockData) != 0)
@@ -14,7 +14,7 @@ bool Connect::open(const char* hostName, char* port)
     info.ai_socktype = SOCK_STREAM;
     info.ai_protocol = IPPROTO_TCP;
 
-    int err = getaddrinfo(hostName, port, &info, &infoP);
+    int err = getaddrinfo(hostName, &port, &info, &infoP);
     if (err != 0)
     {
         // Note: errno is not set by addr info
@@ -45,7 +45,7 @@ bool Connect::open(const char* hostName, char* port)
 
 }
 
-bool Connect::recieve(std::string& buffS)
+char* Connect::read()
 {
     int i = 0;
     int buffSize = 512, buffRecieved = 0;
@@ -54,18 +54,17 @@ bool Connect::recieve(std::string& buffS)
     {
         // not equal to catch neg error!!!
         i = recv(sock, buff + buffRecieved, buffSize, 0);
-        std::cout << buff << std::endl;
 
         if (i == 0)
         {
             std::cerr << "Connection severed by server" << std::endl;
-            return false;
+            return nullptr;
         }
 
         else if (i < 0)
         {
             std::cerr << "Recieve Err: " << WSAGetLastError() << std::endl;
-            return false;
+            return nullptr;
         }
         if (buffSize < i)
         {
@@ -75,10 +74,12 @@ bool Connect::recieve(std::string& buffS)
         buffRecieved += i;
         buffSize -= i;
     }
-    buffS = buff;
-    std::cout << buffS << std::endl;
-    delete[] buff;
-    return true;
+    return buff;
+}
+
+bool Connect::openSockFile(fs::path socket, char slot)
+{
+    return open(socket.string().c_str(), slot);
 }
 
 bool Connect::isConnected()

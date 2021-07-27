@@ -57,7 +57,7 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
 bool Twitch::login()
 {
     //controller.CreateController();
-    if (connection.open(address.c_str(), "6697"))
+    if (connection.open(address.c_str(), '6697'))
     {
         if (!connection.sendAll("PASS " + setting.oauthToken + "\r\n"))
         {
@@ -70,7 +70,7 @@ bool Twitch::login()
         }
     }
 
-    if ((buffer = connection.recieve<std::string>()).empty())
+    if ((buffer = connection.read()).empty())
     {
         return false;
     }
@@ -97,7 +97,7 @@ bool Twitch::update()
 {
     while (connection.isConnected())
     {
-        if ((buffer = connection.recieve<std::string>()).empty())
+        if ((buffer = connection.read()).empty())
         {
             return false;
         }

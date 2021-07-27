@@ -18,9 +18,9 @@ class Connect
     fd_set set;
 
 public:
-    bool open(const char* hostName, char* port);
-    bool openSockFile(fs::path socket, int slot);
-    bool recieve(std::string& buff);
+    bool open(const char* hostName, char port);
+    bool openSockFile(fs::path socket, char slot);
+    char* read();
     bool sendAll(std::string buf);
     bool httpGet();
     bool httpPost();

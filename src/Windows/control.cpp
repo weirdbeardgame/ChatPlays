@@ -94,16 +94,16 @@ bool Emit::emit(Buttons& cmd)
 	{
 	case Buttons::UP:
 		// Set to max values of Xinput
-		axis.set(0, 65535, 0, 0); 
+		axis.set(0, short(65535), 0, 0); 
 		break;
 	case Buttons::DOWN:
-		axis.set(0, -65535, 0, 0);
+		axis.set(0, short(-65535), 0, 0);
 		break;
 	case Buttons::RIGHT:
-		axis.set(65535, 0, 0, 0);
+		axis.set(short(65535), 0, 0, 0);
 		break;
 	case Buttons::LEFT:
-		axis.set(-65535, 0, 0, 0);
+		axis.set(short(-65535), 0, 0, 0);
 		break;
 	}
 

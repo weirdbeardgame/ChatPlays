@@ -55,9 +55,9 @@ static std::map<std::string, Buttons> commands
 struct axisData
 {
 private:
-    long axis[4];
+    short axis[4];
 public:
-    void set(long x, long y, long rx, long ry)
+    void set(short x, short y, short rx, short ry)
     {
         axis[0] = x;
         axis[1] = y;
@@ -65,7 +65,7 @@ public:
         axis[3] = ry;
     }
 
-    long get(int i)
+    short get(int i)
     {
         return axis[i];
     }
