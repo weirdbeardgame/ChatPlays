@@ -24,40 +24,26 @@ class Connect
     public:
     bool open(const char* hostName, char* port);
     bool openSockFile(fs::path socket, int slot);
+    char* recieve();
     template<typename T>
-    T recieve()
+    int sendBytes(T val, int siz)
     {
-        int i = 0;
-        int buffSize = 512, buffRecieved = 0;
-        T* buff = new T[512];
-        while (buffRecieved < buffSize)
+        if (sock <= 0)
         {
-            // not equal to catch neg error!!!
-            i = recv(sock, buff + buffRecieved, buffSize, 0); 
-
-            if (i == 0)
-            {
-                std::cerr << "Connection severed by server" << std::endl;
-                return nullptr;
-            }
-
-            else if (i < 0)
-            {
-                std::cerr << "Recieve Err: " << gai_strerror(i) << std::endl;
-                return nullptr;
-            }
-            if (buffSize < i)
-            {
-                buffSize = i;
-                buff = new T[buffSize];
-            }
-            buffRecieved += i;
-            buffSize -= i;
+            std::cerr << "Connection terminated" << std::endl;
+            return -1;
         }
 
-        return *buff;
+        char* buffer = (char*)&val;
+
+        int size = send(sock, buffer, siz, 0);
+        if (size < 0)
+        {
+            std::cerr << "Send Err: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return size;
     }
-    bool sendAll(std::string buf);
     bool httpGet();
     bool httpPost();
     std::string parseCommand(std::string s);

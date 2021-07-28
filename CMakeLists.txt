@@ -1,4 +1,4 @@
-Project(controllerTest)
+Project(ChatPlays)
 cmake_minimum_required(VERSION 3.20.2)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,5 +14,5 @@ include_directories(${CMAKE_SOURCE_DIR}/Header ${EVDEV_INCLUDE_DIRS} ${CMAKE_SOU
 link_directories(${CMAKE_SOURCE_DIR}/src ${EVDEV_LIBRARIES})
 
 set (SOURCES src/Linux/control.cpp src/main.cpp src/twitch.cpp src/Linux/connect.cpp src/settings.cpp src/ipc.cpp)
-add_executable(controllerTest ${SOURCES})
-target_link_libraries(controllerTest PRIVATE ${EVDEV_LIBRARIES})
+add_executable(ChatPlays ${SOURCES})
+target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES})

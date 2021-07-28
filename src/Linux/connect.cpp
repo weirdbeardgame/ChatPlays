@@ -40,6 +40,40 @@ bool Connect::open(const char* hostname, char* port)
     return true;
 }
 
+char* Connect::recieve()
+{
+        int i = 0;
+        int buffSize = 512, buffRecieved = 0;
+        char* buff = new char[512];
+        while (buffRecieved < buffSize)
+        {
+            // not equal to catch neg error!!!
+            i = recv(sock, buff + buffRecieved, buffSize, 0); 
+
+            if (i == 0)
+            {
+                std::cerr << "Connection severed by server" << std::endl;
+                return nullptr;
+            }
+
+            else if (i < 0)
+            {
+                std::cerr << "Recieve Err: " << gai_strerror(i) << std::endl;
+                return nullptr;
+            }
+            if (buffSize < i)
+            {
+                buffSize = i;
+                buff = new char[buffSize];
+            }
+            buffRecieved += i;
+            buffSize -= i;
+        }
+
+        return buff;
+}
+
+
 bool Connect::openSockFile(fs::path socket, int slot)
 {
     
@@ -53,26 +87,6 @@ bool Connect::isConnected()
 std::string Connect::parseCommand(std::string command)
 {
     return strtok(command.data(), "!");
-}
-
-bool Connect::sendAll(std::string buf)
-{
-    size_t size = buf.size();
-    if (sock <= 0)
-    {
-        std::cerr << "Connection terminated" << std::endl;
-        return false;
-    }
-    int i = send(sock, buf.c_str(), size, 0);
-    if (i < 0)
-    {
-        std::cerr << "Send Err: " << strerror(errno) << std::endl;
-        return false;
-    }
-    std::cout << "Buff: " << buf << " Buff Size: " << buf.size() << std::endl;
-    std::cout << "Sent: " << i << std::endl;
-    return true;
-
 }
 
 void Connect::disconnect()
