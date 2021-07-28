@@ -6,7 +6,7 @@ Settings::Settings()
     filePath = std::string();
 }
 
-Settings::Settings(std::string fileName)
+Settings::Settings(fs::path fileName)
 {
     filePath = fileName;
     j = json(filePath.make_preferred());
@@ -41,11 +41,11 @@ void Settings::edit()
     filePath = "settings/settings.json";
     if (!fs::exists(filePath))
     {
-        save(filePath.string());
+        save(filePath);
     }
 }
 
-bool Settings::load(std::string fileName, std::string delimit)
+bool Settings::load(fs::path fileName)
 {
     filePath = fileName;
     if (fs::exists(filePath))
@@ -57,12 +57,12 @@ bool Settings::load(std::string fileName, std::string delimit)
     }
     else
     {
-        save(filePath.string());
+        save(filePath);
     }
     return true;
 }
 
-bool Settings::save(std::string fileName)
+bool Settings::save(fs::path fileName)
 {
     std::cout << "Save" << std::endl;
     if (!fs::exists(filePath.parent_path()))
@@ -82,7 +82,7 @@ bool Settings::save(std::string fileName)
     {
         twitchSettings.save(j);
         controllerSettings.save(j);
-        fileStream.open(filePath, std::ios::out);
+        fileStream.open(fileName, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();
     }

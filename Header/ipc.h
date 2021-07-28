@@ -78,27 +78,35 @@ public:
 
 	// Return Address type at pos
 	template<typename T>
-	T read(int loc, IPCCommand com)
+	auto read(int loc, T com)
 	{
 		buffer = connect.read();
 		switch ((IPCCommand)buffer[strlen(buffer) - 1])
 		{
 		case IPCCommand::MsgRead8:
-			return read8();
+			return read8(loc);
 			break;
 		case IPCCommand::MsgRead16:
-			return read16();
+			return read16(loc);
 			break;
 		case IPCCommand::MsgRead32:
-			return read32();
+			return read32(loc);
+			break;
+		case IPCCommand::MsgRead64:
+			return read64(loc);
 			break;
 		}
 	}
 
-	uint8_t read8();
-	uint16_t read16();
-	uint32_t read32();
-	uint64_t read64();
+	void write8(uint8_t val);
+	void write16(uint16_t val);
+	void write32(uint32_t val);
+	void write64(uint64_t val);
+
+	uint8_t read8(int pos);
+	uint16_t read16(int pos);
+	uint32_t read32(int pos);
+	uint64_t read64(int pos);
 
 	std::string gameTitle();
 };

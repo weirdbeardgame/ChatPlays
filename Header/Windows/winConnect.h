@@ -22,6 +22,25 @@ public:
     bool openSockFile(fs::path socket, char slot);
     char* read();
     bool sendAll(std::string buf);
+    template <typename T>
+    int sendBytes(T val, int siz)
+    {
+        if (sock <= 0)
+        {
+            std::cerr << "Connection terminated" << std::endl;
+            return -1;
+        }
+
+        char* buffer = (char*)&val;
+
+        int size = send(sock, buffer, siz, 0);
+        if (size < 0)
+        {
+            std::cerr << "Send Err: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return size;
+    }
     bool httpGet();
     bool httpPost();
     std::string parseCommand(std::string s);

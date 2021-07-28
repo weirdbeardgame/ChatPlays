@@ -31,11 +31,11 @@ class Settings
 
     public:
     Settings();
-    Settings(std::string fileName);
+    Settings(fs::path fileName);
     void init();
     void edit();
 
-    bool load(std::string fileName, std::string delimit = " ");
-    bool save(std::string fileName);
+    bool load(fs::path fileName);
+    bool save(fs::path fileName);
 
 };

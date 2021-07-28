@@ -59,12 +59,14 @@ bool Twitch::login()
     //controller.CreateController();
     if (connection.open(address.c_str(), '6697'))
     {
-        if (!connection.sendAll("PASS " + setting.oauthToken + "\r\n"))
+        std::string buf1 = ("PASS " + setting.oauthToken + "\r\n");
+        if (!connection.sendBytes<std::string>(buf1, buf1.size()))
         {
             return false;
         }
 
-        if (!connection.sendAll("NICK " + setting.userName + "\r\n"))
+        std::string buf2 = ("NICK " + setting.userName + "\r\n");
+        if (!connection.sendBytes(buf2, buf2.size()));
         {
             return false;
         }
@@ -77,12 +79,14 @@ bool Twitch::login()
 
     if (!isJoined)
     {
-        if (!connection.sendAll("JOIN #" + setting.channelName + "\r\n"))
+        std::string buf4 = ("JOIN #" + setting.channelName + "\r\n");
+        if (!connection.sendBytes<std::string>(buf4, buf4.size()))
         {
             return false;
         }
 
-        if (!connection.sendAll("CAP REQ :twitch.tv/membership"))
+        std::string buf5 = "CAP REQ :twitch.tv/membership";
+        if (!connection.sendBytes<std::string>(buf5, buf5.size()))
         {
             return false;
         }
@@ -110,7 +114,7 @@ bool Twitch::update()
         if (buffer.find("PING :tmi.twitch.tv"))
         {
             std::cout << "PING RECIEVED" << std::endl;
-            connection.sendAll(pong);
+            connection.sendBytes(pong, pong.size());
         }
 
         if(controller.emit(controller.GetCommands(com)))

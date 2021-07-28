@@ -92,26 +92,6 @@ std::string Connect::parseCommand(std::string command)
     return strtok(command.data(), "!");
 }
 
-bool Connect::sendAll(std::string buf)
-{
-    size_t size = buf.size();
-    if (sock <= 0)
-    {
-        std::cerr << "Connection terminated" << std::endl;
-        return false;
-    }
-    int i = send(sock, buf.c_str(), size, 0);
-    if (i < 0)
-    {
-        std::cerr << "Send Err: " << strerror(errno) << std::endl;
-        return false;
-    }
-    std::cout << "Buff: " << buf << " Buff Size: " << buf.size() << std::endl;
-    std::cout << "Sent: " << i << std::endl;
-    return true;
-
-}
-
 void Connect::disconnect()
 {
     memset(&info, 0, sizeof(info));
