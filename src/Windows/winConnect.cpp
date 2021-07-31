@@ -45,7 +45,7 @@ bool Connect::open(const char* hostName, char port)
 
 }
 
-char* Connect::read()
+char* Connect::recieve()
 {
     int i = 0;
     int buffSize = 512, buffRecieved = 0;

@@ -15,8 +15,7 @@ Settings::Settings(fs::path fileName)
 void Settings::init()
 {
     char command;
-    std::cout << "Avalible Commands are: " << std::endl;
-    std::cout << "e: Edit settings" << std::endl
+    std::cout << "Avalible Commands are: " << std::endl << "e: Edit settings" << std::endl
     << "q: Quit" << std::endl; 
     std::cin >> command;
     switch (command)
@@ -39,6 +38,22 @@ void Settings::edit()
 {
     json j;
     filePath = "settings/settings.json";
+    char command;
+
+
+    std::cout << "T: twitch settings" << std::endl << "C: controller settings" << std::endl;
+    std::cin >> command;
+
+    switch (command)
+    {
+        case 'T':
+            twitchSettings.save(j, true);
+            break;
+        case 'C':
+            controllerSettings.initalConfig();
+            break;
+    }
+
     if (!fs::exists(filePath))
     {
         save(filePath);
@@ -72,8 +87,8 @@ bool Settings::save(fs::path fileName)
     else if (!fs::exists(filePath))
     {
         twitchSettings.save(j, true);
-        //controllerSettings.initalConfig();
-        //controllerSettings.save(j, true);
+        controllerSettings.initalConfig();
+        controllerSettings.save(j, true);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();

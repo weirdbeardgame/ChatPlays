@@ -1,5 +1,7 @@
+#include <chrono>
 #include "Linux/control.h"
-#include <poll.h>
+#include <condition_variable>
+#include <functional>
 
 Controller::Controller()
 {
@@ -52,32 +54,25 @@ void Emit::save(json &j, bool isDefault)
     }
 }
 
-input_event Controller::pollEvent(int i)
+bool Controller::pollEvent()
 {
-    // This needs some kind of freeze and timer logic. IE. It will wait for input for X amount of seconds before continuing with defaults
-    input_event ev;
-    toPoll = new pollfd();
-    toPoll->fd = fd;
-    toPoll->events = POLLOUT | POLLWRBAND;
-    int err = poll(toPoll, 1, -1);
-
-    //int err = 0;
-    //err = read(fd, ev, sizeof(ev));
+    int err = 0;
+    err = read(fd, &ev, sizeof(ev));
 
     err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
     if (err < 0)
     {
         printf("Failed read: ", strerror(errno) + '\n');
-        return input_event();
+        return false;
     }
     else if (ev.type > 0)
     {
         //printf("ev: 0x%02x", ev.code + ' \n');
-        return ev;
+        return true;
     }
 }
 
-/*void Emit::initalConfig()
+void Emit::initalConfig()
 {
     // List devices and select one to save.
     std::vector<Controller> controlSelect(15);
@@ -149,35 +144,44 @@ input_event Controller::pollEvent(int i)
         controller = controlSelect[j];
     }
 
+    bool polled;
+    std::thread th = controller.createPollThread();
+    std::condition_variable condition;
+
     for (int i = 0; i < controlNames.size(); i++)
     {
-        input_event ev = controller.pollEvent(i);
-        switch (ev.type)
+        std::mutex m;
+        std::unique_lock<std::mutex> lck(m);
+        while (condition.wait_for(lck, std::chrono::seconds(5)) == std::cv_status::timeout)
         {
-            case EV_ABS:
-                input_absinfo absTemp;
-                // I want code then I poll for ABS Info
-                ioctl(controller.fd, EVIOCGABS(ev.code), absTemp);
-                if (absTemp.maximum > 0 && !controller.abs.contains(ev.code))
-                {
-                    controller.abs.try_emplace(ev.code, absTemp);
+            switch (controller.ev.type)
+            {
+                case EV_ABS:
+                    input_absinfo absTemp;
+                    // I want code then I poll for ABS Info
+                    ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
+                    if (absTemp.maximum > 0 && !controller.abs.contains(controller.ev.code))
+                    {
+                        //controller.abs.try_emplace(controller.ev.code, absTemp);
+                    }
+                    controller.mappedControls.try_emplace((Buttons)i, controller.ev);
+                    break;
+
+                    case EV_KEY:
+                        controller.mappedControls.try_emplace((Buttons)i, controller.ev);
+                        break;
+
+                default:
+                    controller.pollEvent();
+                    break;
                 }
-                controller.mappedControls.try_emplace((Buttons)i, ev);
-                break;
-
-            case EV_KEY:
-                controller.mappedControls.try_emplace((Buttons)i, ev);
-                break;
-
-            default:
-                input_event ev = controller.pollEvent(i);
-                break;
         }
+
     }
 
     controller.uniqueID = libevdev_get_uniq(controller.dev);
     controller.driverVersion = libevdev_get_driver_version(controller.dev);
-}*/
+}
 bool Emit::CreateController()
 {
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);

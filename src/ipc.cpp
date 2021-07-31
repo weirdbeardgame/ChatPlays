@@ -15,11 +15,11 @@ std::string IPC::gameTitle()
 uint8_t IPC::read8(int pos)
 {
     // extract value out of buffer and return that
-    uint32_t temp = static_cast<uint32_t>(buffer[pos]);
+    //uint32_t *temp = static_cast<uint32_t*>(&buffer[pos]);
     uint8_t value = 0;
 
     // Host Endianess
-    memcpy(&value, &temp, sizeof(value));
+    //memcpy(&value, &temp, sizeof(value));
     return value;
 }
 
