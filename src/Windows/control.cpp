@@ -94,16 +94,16 @@ bool Emit::emit(Buttons& cmd)
 	{
 	case Buttons::UP:
 		// Set to max values of Xinput
-		axis.set(0, short(65535), 0, 0); 
+		axis.set(0, 32767, 0, 0); 
 		break;
 	case Buttons::DOWN:
-		axis.set(0, short(-65535), 0, 0);
+		axis.set(0, -32768, 0, 0);
 		break;
 	case Buttons::RIGHT:
-		axis.set(short(65535), 0, 0, 0);
+		axis.set(32767, 0, 0, 0);
 		break;
 	case Buttons::LEFT:
-		axis.set(short(-65535), 0, 0, 0);
+		axis.set(-32768, 0, 0, 0);
 		break;
 	}
 
@@ -122,7 +122,7 @@ bool Emit::emit(Buttons& cmd)
 int Emit::pressBtn(Buttons& btn)
 {
 	report = new XUSB_REPORT();
-	report->wButtons |= 1 << buttonPos[btn];
+	report->wButtons |= buttonPos[btn];
 	return vigem_target_x360_update(driver, xbox, *report);
 }
 
@@ -146,10 +146,10 @@ int Emit::moveABS(axisData axis)
 int Emit::resetABS()
 {
 	report = new XUSB_REPORT();
-	report->sThumbLX = 32767;
-	report->sThumbLY = 32767;
-	report->sThumbRX = 32767;
-	report->sThumbRY = 32767;
+	report->sThumbLX = 0;
+	report->sThumbLY = 0;
+	report->sThumbRX = 0;
+	report->sThumbRY = 0;
 	return vigem_target_x360_update(driver, xbox, *report);
 }
 
