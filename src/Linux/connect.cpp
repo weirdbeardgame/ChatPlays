@@ -74,7 +74,7 @@ char* Connect::recieve()
 }
 
 
-bool Connect::openSockFile(fs::path socket, int slot)
+bool Connect::openSockFile(fs::path socket, uint slot)
 {
     
 }

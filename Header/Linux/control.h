@@ -1,14 +1,15 @@
 #pragma once
 #include <map>
+#include <mutex>
 #include <queue>
 #include <vector>
+#include <thread>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <filesystem>
-#include <sys/poll.h>
 #include <linux/uinput.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
@@ -180,14 +181,19 @@ struct Controller
     };
 
     std::string uniqueID;
+
     int driverVersion;
-
     int fd;
-    
-    libevdev *dev;
-    pollfd* toPoll;
 
-    input_event pollEvent(int i);
+    input_event ev;
+
+    libevdev *dev;
+    bool pollEvent();
+
+    std::thread createPollThread()
+    {
+        return std::thread(&Controller::pollEvent, this);
+    }
 
     friend void to_json(nlohmann::json& j, const Controller& p);
     friend void from_json(const nlohmann::json& j, Controller& p);

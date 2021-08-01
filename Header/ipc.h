@@ -80,7 +80,7 @@ public:
 	template<typename T>
 	auto read(int loc, T com)
 	{
-		buffer = connect.read();
+		buffer = connect.recieve();
 		switch ((IPCCommand)buffer[strlen(buffer) - 1])
 		{
 		case IPCCommand::MsgRead8:

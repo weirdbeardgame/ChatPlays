@@ -20,7 +20,7 @@ class Connect
 public:
     bool open(const char* hostName, char port);
     bool openSockFile(fs::path socket, char slot);
-    char* read();
+    char* recieve();
     bool sendAll(std::string buf);
     template <typename T>
     int sendBytes(T val, int siz)
