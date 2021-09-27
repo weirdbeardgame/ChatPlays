@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <iostream>
 #include <string>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -17,13 +18,14 @@ class Connect
     timeval tv;
     fd_set set;
 
+    std::thread th;
+
 public:
-    bool open(const char* hostName, char port);
+    bool open(const char* hostName, const char* port);
     bool openSockFile(fs::path socket, char slot);
     char* recieve();
     bool sendAll(std::string buf);
-    template <typename T>
-    int sendBytes(T val, int siz)
+    inline int sendBytes(const char* val, int siz)
     {
         if (sock <= 0)
         {
@@ -31,9 +33,11 @@ public:
             return -1;
         }
 
-        char* buffer = (char*)&val;
+        //char* buffer = (char*)&val;
 
-        int size = send(sock, buffer, siz, 0);
+        std::cout << "Buffer: " << val << std::endl;
+
+        int size = send(sock, val, siz, 0);
         if (size < 0)
         {
             std::cerr << "Send Err: " << strerror(errno) << std::endl;

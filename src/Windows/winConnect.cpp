@@ -1,6 +1,6 @@
 #include "Windows/winConnect.h"
 
-bool Connect::open(const char* hostName, char port)
+bool Connect::open(const char* hostName, const char* port)
 {
     WSADATA winSockData;
     if (WSAStartup(MAKEWORD(2, 2), &winSockData) != 0)
@@ -9,12 +9,12 @@ bool Connect::open(const char* hostName, char port)
         return 1;
     }
 
+    memset(&info, 0, sizeof(info));
     info.ai_family = AF_INET;
-    info.ai_flags = AI_PASSIVE;
     info.ai_socktype = SOCK_STREAM;
     info.ai_protocol = IPPROTO_TCP;
 
-    int err = getaddrinfo(hostName, &port, &info, &infoP);
+    int err = getaddrinfo(hostName, port, &info, &infoP);
     if (err != 0)
     {
         // Note: errno is not set by addr info
@@ -31,6 +31,8 @@ bool Connect::open(const char* hostName, char port)
             std::cerr << "SOCKET ERROR: " << WSAGetLastError() << std::endl;
             return false;
         }
+
+        ioctlsocket(sock, FIONBIO, (unsigned long*)1);
 
         int conErr = connect(sock, connectP->ai_addr, connectP->ai_addrlen);
 
@@ -79,7 +81,8 @@ char* Connect::recieve()
 
 bool Connect::openSockFile(fs::path socket, char slot)
 {
-    return open(socket.string().c_str(), slot);
+     //open(socket.string().c_str(), slot);
+    return false;
 }
 
 bool Connect::isConnected()

@@ -1,6 +1,9 @@
 #include "Windows/control.h"
-#include <windows.h>
+#include <Windows.h>
+#include <iostream>
 #include <stdio.h>
+#include <thread>
+#include <mutex>
 
 Emit::Emit()
 {
@@ -57,13 +60,17 @@ VOID CALLBACK notification(
 	std::cout << (int)SmallMotor << std::endl;*/
 }
 
+void poll()
+{
+}
+
 int Emit::CreateController()
 {
-
 	driver = vigem_alloc();
 	if (driver == nullptr)
 	{
 		std::cerr << "Oops! Driver no allocate! Unga Bunga. Me confused!" << std::endl;
+		isActive = false;
 		return -1;
 	}
 	else
@@ -73,6 +80,7 @@ int Emit::CreateController()
 		if (!VIGEM_SUCCESS(bus))
 		{
 			std::cerr << "ViGEm Bus connection failed with error code: 0x" << std::hex << bus << std::endl;
+			isActive = false;
 			return -1;
 		}
 
@@ -81,76 +89,90 @@ int Emit::CreateController()
 		if (!VIGEM_SUCCESS(plugEv))
 		{
 			std::cerr << "Target plugin failed with error code: 0x" << std::hex << plugEv << std::endl;
+			isActive = false;
 			return -1;
 		}
 		vigem_target_x360_register_notification(driver, xbox, notification, nullptr);
+		isActive = true;
+		emit();
 	}
 }
-
-bool Emit::emit(Buttons& cmd)
+// Reset will kill input! Input is never sent before reset is called
+// This needs to be a loop
+void Emit::emit()
 {
-	axisData axis;
-	switch (cmd)
+	std::string keyCode;
+	while (isActive)
 	{
-	case Buttons::UP:
-		// Set to max values of Xinput
-		axis.set(0, 32767, 0, 0); 
-		break;
-	case Buttons::DOWN:
-		axis.set(0, -32768, 0, 0);
-		break;
-	case Buttons::RIGHT:
-		axis.set(32767, 0, 0, 0);
-		break;
-	case Buttons::LEFT:
-		axis.set(-32768, 0, 0, 0);
-		break;
-	}
-
-	if (cmd > Buttons::RIGHT)
-	{
-		return pressBtn(cmd);
-	}
-	else
-	{
-		moveABS(axis);
-		Sleep(1);
+		report = new XUSB_REPORT();
+		Sleep(500);
 		resetABS();
+		releaseBtn(cmd);
+		vigem_target_x360_update(driver, xbox, *report);
+
+		// I need a better way to poll this.
+		std::cout << "Enter a keycode: ";
+		std::cin >> keyCode;
+		cmd = GetCommands(keyCode);
+
+		axisData axis;
+		switch (cmd)
+		{
+		case Buttons::UP:
+			// Set to max values of Xinput
+			axis.set(0, 32767, 0, 0);
+			break;
+		case Buttons::DOWN:
+			axis.set(0, -32768, 0, 0);
+			break;
+		case Buttons::RIGHT:
+			axis.set(32767, 0, 0, 0);
+			break;
+		case Buttons::LEFT:
+			axis.set(-32768, 0, 0, 0);
+			break;
+		}
+
+		if (cmd > Buttons::RIGHT)
+		{
+			pressBtn(cmd);
+		}
+		else
+		{
+			moveABS(axis);
+		}
+		vigem_target_x360_update(driver, xbox, *report);
 	}
 }
 
-int Emit::pressBtn(Buttons& btn)
+void Emit::pressBtn(Buttons& btn)
 {
-	report = new XUSB_REPORT();
+	if (report == nullptr)
+	{
+		report = new XUSB_REPORT();
+	}
 	report->wButtons |= buttonPos[btn];
-	return vigem_target_x360_update(driver, xbox, *report);
 }
 
-int Emit::releaseBtn(Buttons& btn)
+void Emit::releaseBtn(Buttons& btn)
 {
-	report = new XUSB_REPORT();
-	report->wButtons &= ~(1 << buttonPos[btn]);
-	return vigem_target_x360_update(driver, xbox, *report);
+	report->wButtons = 0; //&= ~(1 << buttonPos[btn]);
 }
 
-int Emit::moveABS(axisData axis)
+void Emit::moveABS(axisData& axis)
 {
-	report = new XUSB_REPORT();
 	report->sThumbLX = axis.get(0);
 	report->sThumbLY = axis.get(1);
 	report->sThumbRX = axis.get(2);
 	report->sThumbRY = axis.get(3);
-	return vigem_target_x360_update(driver, xbox, *report);
 }
 
-int Emit::resetABS()
+void Emit::resetABS()
 {
-	report = new XUSB_REPORT();
 	report->sThumbLX = 0;
 	report->sThumbLY = 0;
 	report->sThumbRX = 0;
 	report->sThumbRY = 0;
-	return vigem_target_x360_update(driver, xbox, *report);
 }
 
 Buttons& Emit::GetCommands(std::string key)

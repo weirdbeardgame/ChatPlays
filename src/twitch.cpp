@@ -16,6 +16,10 @@ TwitchInfo::TwitchInfo()
 
 TwitchInfo::TwitchInfo(json &j)
 {
+    /*for (auto setting = j.begin(); setting != j.end(); setting++)
+    {
+        //userName = setting["userName"];
+    }*/
     from_json(j, *this);
 }
 
@@ -57,16 +61,16 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
 bool Twitch::login()
 {
     //controller.CreateController();
-    if (connection.open(address.c_str(), "6697"))
+    if (connection.open(address.c_str(), "6667"))
     {
         std::string buf1 = ("PASS " + setting.oauthToken + "\r\n");
-        if (!connection.sendBytes<std::string>(buf1, buf1.size()))
+        if (!connection.sendBytes(buf1.c_str(), buf1.size()))
         {
             return false;
         }
 
         std::string buf2 = ("NICK " + setting.userName + "\r\n");
-        if (!connection.sendBytes(buf2, buf2.size()));
+        if (!connection.sendBytes(buf2.c_str(), buf2.size()));
         {
             return false;
         }
@@ -80,13 +84,13 @@ bool Twitch::login()
     if (!isJoined)
     {
         std::string buf4 = ("JOIN #" + setting.channelName + "\r\n");
-        if (!connection.sendBytes<std::string>(buf4, buf4.size()))
+        if (!connection.sendBytes(buf4.c_str(), buf4.size()))
         {
             return false;
         }
 
         std::string buf5 = "CAP REQ :twitch.tv/membership";
-        if (!connection.sendBytes<std::string>(buf5, buf5.size()))
+        if (!connection.sendBytes(buf5.c_str(), buf5.size()))
         {
             return false;
         }
@@ -114,12 +118,7 @@ bool Twitch::update()
         if (buffer.find("PING :tmi.twitch.tv"))
         {
             std::cout << "PING RECIEVED" << std::endl;
-            connection.sendBytes(pong, pong.size());
-        }
-
-        if(controller.emit(controller.GetCommands(com)))
-        {
-            continue;
+            connection.sendBytes(pong.c_str(), pong.size());
         }
 
         std::flush(std::cout);

@@ -11,7 +11,7 @@
 
 #pragma comment(lib, "setupapi.lib")
 
-enum Buttons { UP, DOWN, LEFT, RIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT, CLEAR };
+enum Buttons { UP, DOWN, LEFT, RIGHT, DUP, DDOWN, DLEFT, DRIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT, CLEAR };
 
 using json = nlohmann::json;
 
@@ -28,7 +28,11 @@ static std::map<Buttons, uint16_t> buttonPos =
     {L1, XUSB_GAMEPAD_LEFT_SHOULDER},
     {R1, XUSB_GAMEPAD_RIGHT_SHOULDER},
     {L3, XUSB_GAMEPAD_LEFT_THUMB},
-    {R3, XUSB_GAMEPAD_RIGHT_THUMB}
+    {R3, XUSB_GAMEPAD_RIGHT_THUMB},
+    {DUP, XUSB_GAMEPAD_DPAD_UP},
+    {DDOWN, XUSB_GAMEPAD_DPAD_DOWN},
+    {DLEFT, XUSB_GAMEPAD_DPAD_LEFT},
+    {DRIGHT, XUSB_GAMEPAD_DPAD_RIGHT}
 };
 
 static std::map<std::string, Buttons> commands
@@ -49,7 +53,11 @@ static std::map<std::string, Buttons> commands
     {"R2", R2},
     {"L3", L3},
     {"R3", R3},
-    {"Exit", EXIT}
+    {"Exit", EXIT},
+    {"DUP", DUP},
+    {"DDOWN", DDOWN},
+    {"DLEFT", DLEFT},
+    {"DRIGHT", DRIGHT}
 };
 
 struct axisData
@@ -79,6 +87,10 @@ private:
     PXUSB_REPORT report;
     PVIGEM_CLIENT driver;
     PVIGEM_TARGET xbox;
+
+    Buttons cmd;
+    bool emitFail;
+
 public:
     Emit();
     Emit(json j);
@@ -86,15 +98,18 @@ public:
     void initalConfig();
     Buttons& GetCommands(std::string key);
 
+    // All the action is in here m8
+    bool isActive;
+
     json control;
     void save(json& j, bool isDefault = false);
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
     int CreateController();
-    bool emit(Buttons& cmd);
-    int moveABS(axisData axis);
-    int resetABS();
-    int pressBtn(Buttons& btn);
-    int releaseBtn(Buttons& btn);
+    void emit();
+    void moveABS(axisData& axis);
+    void resetABS();
+    void pressBtn(Buttons& btn);
+    void releaseBtn(Buttons& btn);
 };

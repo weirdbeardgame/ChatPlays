@@ -67,8 +67,9 @@ bool Settings::load(fs::path fileName)
     {
         fileStream.open(filePath, std::ios::in);
         j = j.parse(fileStream);
-        twitchSettings = TwitchInfo(j["TwitchInfo"]); //Psudo load function?
-        controllerSettings = Emit(j["Emit"]);
+        std::cout << "Json: " << j << std::setw(5) << std::endl;
+        twitchSettings = TwitchInfo(j.at("TwitchInfo")); //Psudo load function?
+        //controllerSettings = Emit(j["Emit"]);
     }
     else
     {

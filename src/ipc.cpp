@@ -44,20 +44,20 @@ uint64_t IPC::read64(int pos)
 
 void IPC::write8(uint8_t val)
 {
-    connect.sendBytes<uint8_t>(val, sizeof(val));
+    //connect.sendBytes<uint8_t>(val, sizeof(val));
 }
 
 void IPC::write16(uint16_t val)
 {
-    connect.sendBytes<uint16_t>(val, sizeof(val));
+    //connect.sendBytes<uint16_t>(val, sizeof(val));
 }
 
 void IPC::write32(uint32_t val)
 {
-    connect.sendBytes<uint32_t>(val, sizeof(val));
+    //connect.sendBytes<uint32_t>(val, sizeof(val));
 }
 
 void IPC::write64(uint64_t val)
 {
-    connect.sendBytes<uint64_t>(val, sizeof(val));
+    //connect.sendBytes<uint64_t>(val, sizeof(val));
 }
