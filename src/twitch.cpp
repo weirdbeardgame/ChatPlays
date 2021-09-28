@@ -4,22 +4,15 @@ TwitchInfo::TwitchInfo()
 {
     twitch = nlohmann::json
     {
-        "TwitchInfo" , 
-        {
-            {"userName", "USERNAME HERE"}, 
-            {"oauthToken", "OAUTH HERE"}, 
-            {"channelName", "CHANNEL_NAME HERE"}
-        }
+        {"userName", "USERNAME HERE"},
+        {"oauthToken", "OAUTH HERE"},
+        {"channelName", "CHANNEL_NAME HERE"}
     };
 }
 
 
 TwitchInfo::TwitchInfo(json &j)
 {
-    /*for (auto setting = j.begin(); setting != j.end(); setting++)
-    {
-        //userName = setting["userName"];
-    }*/
     from_json(j, *this);
 }
 
@@ -28,12 +21,12 @@ void TwitchInfo::save(json &j, bool isDefault)
     if (isDefault)
     {
         TwitchInfo t = TwitchInfo();
-        j.push_back(t.twitch);
+        j += t.twitch;
     }
     else
     {
         twitch = *this;
-        j.push_back(twitch);
+        j += twitch;
         
     }
 }
@@ -42,20 +35,19 @@ void to_json(json& j, const TwitchInfo& p)
 {
     j = nlohmann::json
     {
-        "TwitchInfo" , 
-        {
-            {"userName", p.userName}, 
-            {"oauthToken", p.oauthToken}, 
-            {"channelName", p.channelName}
-        }
+        {"userName", p.userName},
+        {"oauthToken", p.oauthToken},
+        {"channelName", p.channelName}
     };
 }
 
 void from_json(const nlohmann::json& j, TwitchInfo& p)
 {
-    j.at("userName").get_to(p.userName);
-    j.at("oauthToken").get_to(p.oauthToken);
-    j.at("channelName").get_to(p.channelName);
+    std::cout << "Twitch: " << j[0] << std::endl;
+
+    j[0]["userName"].get_to(p.userName);
+    j[0]["oauthToken"].get_to(p.oauthToken);
+    j[0]["channelName"].get_to(p.channelName);
 }
 
 bool Twitch::login()

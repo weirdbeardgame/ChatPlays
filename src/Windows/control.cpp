@@ -9,11 +9,8 @@ Emit::Emit()
 {
 	control = json
 	{
-		"Emit" ,
-		{
-			{"commands", commands},
-			//{"controller", controller},
-		}
+		{"commands", commands},
+		//{"controller", controller},
 	};
 
 }
@@ -28,11 +25,11 @@ void Emit::save(json& j, bool isDefault)
 	if (isDefault)
 	{
 		Emit e = Emit();
-		j.push_back(e.control);
+		j += e.control;
 	}
 	else
 	{
-		j.push_back(control);
+		j += control;
 	}
 }
 
@@ -60,8 +57,22 @@ VOID CALLBACK notification(
 	std::cout << (int)SmallMotor << std::endl;*/
 }
 
-void poll()
+void Emit::poll()
 {
+	// Recieve commands from chat and press into emit
+	while (isActive)
+	{
+		std::string keyCode;
+		std::cout << "Enter a keycode: ";
+		std::cin >> keyCode;
+
+		if (keyCode == "Exit")
+		{
+			isActive = false;
+		}
+		cmd = GetCommands(keyCode);
+		emit(cmd, false);
+	}
 }
 
 int Emit::CreateController()
@@ -94,12 +105,12 @@ int Emit::CreateController()
 		}
 		vigem_target_x360_register_notification(driver, xbox, notification, nullptr);
 		isActive = true;
-		emit();
+		emit(Buttons::CLEAR, true);
 	}
 }
 // Reset will kill input! Input is never sent before reset is called
 // This needs to be a loop
-void Emit::emit()
+void Emit::emit(Buttons cmd, bool manualControl)
 {
 	std::string keyCode;
 	while (isActive)
@@ -109,12 +120,18 @@ void Emit::emit()
 		resetABS();
 		releaseBtn(cmd);
 		vigem_target_x360_update(driver, xbox, *report);
+		if (manualControl)
+		{
+			// I need a better way to poll this.
+			std::cout << "Enter a keycode: ";
+			std::cin >> keyCode;
 
-		// I need a better way to poll this.
-		std::cout << "Enter a keycode: ";
-		std::cin >> keyCode;
-		cmd = GetCommands(keyCode);
-
+			if (keyCode == "Exit")
+			{
+				isActive = false;
+			}
+			cmd = GetCommands(keyCode);
+		}
 		axisData axis;
 		switch (cmd)
 		{

@@ -107,7 +107,8 @@ public:
     friend void from_json(const nlohmann::json& j, Emit& p);
 
     int CreateController();
-    void emit();
+    void emit(Buttons cmd, bool manualControl);
+    void poll();
     void moveABS(axisData& axis);
     void resetABS();
     void pressBtn(Buttons& btn);
