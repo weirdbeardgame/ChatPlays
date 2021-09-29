@@ -1,4 +1,5 @@
 #include "twitch.h"
+#include <errno.h>
 
 TwitchInfo::TwitchInfo()
 {
@@ -11,12 +12,12 @@ TwitchInfo::TwitchInfo()
 }
 
 
-TwitchInfo::TwitchInfo(json &j)
+TwitchInfo::TwitchInfo(json& j)
 {
     from_json(j, *this);
 }
 
-void TwitchInfo::save(json &j, bool isDefault)
+void TwitchInfo::Save(json& j, bool isDefault)
 {
     if (isDefault)
     {
@@ -27,8 +28,13 @@ void TwitchInfo::save(json &j, bool isDefault)
     {
         twitch = *this;
         j += twitch;
-        
+
     }
+}
+
+void TwitchInfo::Load(nlohmann::json& j)
+{
+    from_json(j, *this);
 }
 
 void to_json(json& j, const TwitchInfo& p)
@@ -43,8 +49,6 @@ void to_json(json& j, const TwitchInfo& p)
 
 void from_json(const nlohmann::json& j, TwitchInfo& p)
 {
-    std::cout << "Twitch: " << j[0] << std::endl;
-
     j[0]["userName"].get_to(p.userName);
     j[0]["oauthToken"].get_to(p.oauthToken);
     j[0]["channelName"].get_to(p.channelName);
@@ -52,52 +56,52 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
 
 bool Twitch::login()
 {
-    //controller.CreateController();
     if (connection.open(address.c_str(), "6667"))
     {
         std::string buf1 = ("PASS " + setting.oauthToken + "\r\n");
-        if (!connection.sendBytes(buf1.c_str(), buf1.size()))
+        if (connection.sendBytes(buf1.data(), buf1.size()) <= 0)
         {
+            std::cerr << "Send failed: " << strerror(errno) << std::endl;
             return false;
         }
 
         std::string buf2 = ("NICK " + setting.userName + "\r\n");
-        if (!connection.sendBytes(buf2.c_str(), buf2.size()));
+        if (connection.sendBytes(buf2.c_str(), buf2.size()) <= 0)
         {
-            return false;
-        }
-    }
-
-    if ((buffer = connection.recieve()).empty())
-    {
-        return false;
-    }
-
-    if (!isJoined)
-    {
-        std::string buf4 = ("JOIN #" + setting.channelName + "\r\n");
-        if (!connection.sendBytes(buf4.c_str(), buf4.size()))
-        {
+            std::cerr << "Send failed: " << strerror(errno) << std::endl;
             return false;
         }
 
-        std::string buf5 = "CAP REQ :twitch.tv/membership";
-        if (!connection.sendBytes(buf5.c_str(), buf5.size()))
+        std::cout << "Buffer: " << connection.recieve() << std::endl;
+
+        if (!isJoined)
         {
-            return false;
+            std::string buf4 = ("JOIN #" + setting.channelName + "\r\n");
+            if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
+            {
+                std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                isJoined = false;
+            }
+
+            std::string buf5 = "CAP REQ :twitch.tv/membership";
+            if (connection.sendBytes(buf5.c_str(), buf5.size()) < 0)
+            {
+                std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                isJoined = false;
+            }
+
+            isJoined = true;
         }
 
-        isJoined = true;
+        return isJoined;
     }
-
-    return true;
 }
 
 bool Twitch::update()
 {
     while (connection.isConnected())
     {
-        if ((buffer = connection.recieve()).empty())
+        if ((buffer += connection.recieve()).empty())
         {
             return false;
         }

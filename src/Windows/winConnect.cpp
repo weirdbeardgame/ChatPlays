@@ -32,7 +32,7 @@ bool Connect::open(const char* hostName, const char* port)
             return false;
         }
 
-        ioctlsocket(sock, FIONBIO, (unsigned long*)1);
+        //ioctlsocket(sock, FIONBIO, (unsigned long*)1);
 
         int conErr = connect(sock, connectP->ai_addr, connectP->ai_addrlen);
 
@@ -50,12 +50,13 @@ bool Connect::open(const char* hostName, const char* port)
 char* Connect::recieve()
 {
     int i = 0;
-    int buffSize = 512, buffRecieved = 0;
+    int buffSize = 480, buffRecieved = 0;
     char* buff = new char[512];
-    while (buffRecieved < buffSize)
+    if (i = recv(sock, buff, buffSize, 0) > 0)
     {
         // not equal to catch neg error!!!
-        i = recv(sock, buff + buffRecieved, buffSize, 0);
+
+        std::cout << "Buff: " << buff << std::endl;
 
         if (i == 0)
         {
@@ -73,8 +74,6 @@ char* Connect::recieve()
             buffSize = i;
             buff = new char[buffSize];
         }
-        buffRecieved += i;
-        buffSize -= i;
     }
     return buff;
 }

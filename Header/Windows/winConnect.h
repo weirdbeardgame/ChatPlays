@@ -33,16 +33,15 @@ public:
             return -1;
         }
 
-        //char* buffer = (char*)&val;
-
         std::cout << "Buffer: " << val << std::endl;
 
         int size = send(sock, val, siz, 0);
-        if (size < 0)
+        if (size <= 0)
         {
             std::cerr << "Send Err: " << strerror(errno) << std::endl;
             return false;
         }
+        std::cout << "Size: " << size << std::endl;
         return size;
     }
     bool httpGet();

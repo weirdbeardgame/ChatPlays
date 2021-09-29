@@ -1,22 +1,23 @@
 #include <iostream>
 #include "settings.h"
+    
+static Twitch* twitchConnect;
+static Emit* controller;
+
 
 void twitch()
 {
-    Twitch twitch;
-
-    bool isActive = twitch.login();
+    bool isActive = twitchConnect->login();
     while(isActive)
     {
-        isActive = twitch.update();
+        isActive = twitchConnect->update();
     }
 }
 
 void manualControl()
 {
-    Emit controller;
     Connect connection;
-    bool input = controller.CreateController();
+    bool input = controller->CreateController();
     std::cout << "Start " << input << std::endl;
     // This is expecting a different device
     std::thread th(&Emit::CreateController, Emit());
@@ -25,7 +26,9 @@ void manualControl()
 
 int main()
 {
-    Settings settings;
+    twitchConnect = new Twitch();
+    controller = new Emit();
+    Settings* settings = new Settings(controller, &twitchConnect->setting);
     bool isActive = true;
     char command;
 
@@ -33,8 +36,6 @@ int main()
     << "t: Twitch" << std::endl
     << "c: Manually control bot" << std::endl
     << "s: Edit Settings" << std::endl;
-
-    settings.load("settings/settings.json");
 
     while(isActive)
     {
@@ -52,7 +53,7 @@ int main()
                 break;
 
             case 's':
-                settings.init();
+                settings->init();
                 break;
 
             default:

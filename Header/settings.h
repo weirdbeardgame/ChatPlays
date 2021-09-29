@@ -24,18 +24,18 @@ class Settings
 {
     private:
     std::fstream fileStream;
-    fs::path filePath;
-    Emit controllerSettings;
-    TwitchInfo twitchSettings;
+    fs::path filePath = "settings/settings.json";
+    Emit* controllerSettings;
+    TwitchInfo* twitchSettings;
     json j;
 
     public:
     Settings();
-    Settings(fs::path fileName);
+    Settings(Emit* c, TwitchInfo* t);
     void init();
     void edit();
 
-    bool load(fs::path fileName);
-    bool save(fs::path fileName);
+    bool load();
+    bool save();
 
 };

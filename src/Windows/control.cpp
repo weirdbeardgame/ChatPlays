@@ -17,7 +17,9 @@ Emit::Emit()
 
 Emit::Emit(json j)
 {
-	//from_json(j, *this);
+#ifdef __linux__
+	from_json(j, *this);
+#endif
 }
 
 void Emit::save(json& j, bool isDefault)

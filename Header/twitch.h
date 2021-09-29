@@ -23,7 +23,8 @@ struct TwitchInfo
 
     TwitchInfo();
     TwitchInfo(nlohmann::json &j);
-    void save(nlohmann::json &j, bool isDefault = false);
+    void Save(nlohmann::json &j, bool isDefault = false);
+    void Load(nlohmann::json& j);
     friend void to_json(nlohmann::json& j, const TwitchInfo& p);
     friend void from_json(const nlohmann::json& j, TwitchInfo& p);
 };
@@ -31,7 +32,6 @@ struct TwitchInfo
 class Twitch
 {
     private:
-    TwitchInfo setting;
     std::string address = "irc.chat.twitch.tv";
     std::string pong = "PONG :tmi.twitch.tv";
     Connect connection;
@@ -39,6 +39,7 @@ class Twitch
     std::string buffer;
     bool isJoined;
     public:
+    TwitchInfo setting;
     bool login();
     // bool open(std::string address for other service integration like discord?
     // recieve commands from chat and parse
