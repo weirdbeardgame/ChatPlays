@@ -4,7 +4,6 @@
 static Twitch* twitchConnect;
 static Emit* controller;
 
-
 void twitch()
 {
     bool isActive = twitchConnect->login();

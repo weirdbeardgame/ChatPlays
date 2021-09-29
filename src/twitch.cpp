@@ -97,6 +97,8 @@ bool Twitch::login()
     }
 }
 
+// Step two. Parse command and send through thread to controller or IPC alike.
+
 bool Twitch::update()
 {
     while (connection.isConnected())
