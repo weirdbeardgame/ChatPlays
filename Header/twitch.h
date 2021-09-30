@@ -9,6 +9,7 @@
 #include "Windows/control.h"
 #endif
 
+#include "message.h"
 #include "json.hpp"
 
 using json = nlohmann::json;
@@ -17,33 +18,42 @@ struct TwitchInfo
 {
     std::string userName;
     std::string oauthToken;
-    // This will typically be your twitch username unless you're trying to join someone elses channel
     std::string channelName;
+
     json twitch;
 
     TwitchInfo();
-    TwitchInfo(nlohmann::json &j);
-    void Save(nlohmann::json &j, bool isDefault = false);
+    TwitchInfo(nlohmann::json& j);
+
+    void Save(nlohmann::json& j, bool isDefault = false);
     void Load(nlohmann::json& j);
+
     friend void to_json(nlohmann::json& j, const TwitchInfo& p);
     friend void from_json(const nlohmann::json& j, TwitchInfo& p);
 };
 
 class Twitch
 {
-    private:
+private:
+    std::string buffer;
     std::string address = "irc.chat.twitch.tv";
     std::string pong = "PONG :tmi.twitch.tv";
+
     Connect connection;
     Emit controller;
-    std::string buffer;
+
+    Message queue;
+
     bool isJoined;
-    public:
+public:
+
     TwitchInfo setting;
     bool login();
-    // bool open(std::string address for other service integration like discord?
+
+    // bool open(std::string address); for other service integration like discord?
     // recieve commands from chat and parse
-    bool update(); 
+
+    bool update();
     void exit();
 
 };

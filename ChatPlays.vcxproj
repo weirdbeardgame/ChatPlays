@@ -115,6 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\message.cpp" />
     <ClCompile Include="src\ipc.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\settings.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="header\twitch.h" />
     <ClInclude Include="Header\Windows\control.h" />
     <ClInclude Include="Header\Windows\winConnect.h" />
+    <ClInclude Include="header\message.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="3rdparty\windows\ViGEmClient\src\ViGEmClient.vcxproj">

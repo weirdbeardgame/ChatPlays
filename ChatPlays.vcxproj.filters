@@ -38,12 +38,12 @@
     <ClCompile Include="src\Windows\control.cpp">
       <Filter>Source Files\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\message.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\ipc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\twitch.h">
@@ -57,6 +57,12 @@
     </ClInclude>
     <ClInclude Include="3rdparty\json.hpp">
       <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="header\settings.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\message.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -89,16 +89,13 @@ bool Twitch::login()
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
-
             isJoined = true;
         }
-
         return isJoined;
     }
 }
 
 // Step two. Parse command and send through thread to controller or IPC alike.
-
 bool Twitch::update()
 {
     while (connection.isConnected())
@@ -117,6 +114,13 @@ bool Twitch::update()
         {
             std::cout << "PING RECIEVED" << std::endl;
             connection.sendBytes(pong.c_str(), pong.size());
+        }
+        else
+        {
+            // Just remeber. This isn't accessible outside of this class.
+            // We need to break this twitch connection and others out on their own thread.
+            // Need to work on thread sync and the passing of messages.
+            queue.enque(com);
         }
 
         std::flush(std::cout);

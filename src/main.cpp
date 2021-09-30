@@ -1,6 +1,7 @@
 #include <iostream>
 #include "settings.h"
-    
+#include "message.h"
+
 static Twitch* twitchConnect;
 static Emit* controller;
 
@@ -18,7 +19,6 @@ void manualControl()
     Connect connection;
     bool input = controller->CreateController();
     std::cout << "Start " << input << std::endl;
-    // This is expecting a different device
     std::thread th(&Emit::CreateController, Emit());
     th.join();
 }
