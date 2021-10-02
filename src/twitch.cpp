@@ -54,6 +54,15 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
     j[0]["channelName"].get_to(p.channelName);
 }
 
+void Twitch::create()
+{
+    Twitch t;
+    if (t.login())
+    {
+        t.update();
+    }
+}
+
 bool Twitch::login()
 {
     if (connection.open(address.c_str(), "6667"))
@@ -110,10 +119,14 @@ bool Twitch::update()
 
         std::string com = connection.parseCommand(buffer);
 
-        if (buffer.find("PING :tmi.twitch.tv"))
+        if (buffer.find("PING :tmi.twitch.tv") != std::string::npos)
         {
-            std::cout << "PING RECIEVED" << std::endl;
-            connection.sendBytes(pong.c_str(), pong.size());
+            std::cout << "Pong: " << pong.c_str() << std::endl;
+            if (!connection.sendBytes(pong.c_str(), pong.size()))
+            {
+                std::cout << "Send Error" << std::endl;
+                return false;
+            }
         }
         else
         {
@@ -123,6 +136,8 @@ bool Twitch::update()
             queue.enque(com);
         }
 
+        com.clear();
+        buffer.clear();
         std::flush(std::cout);
     }
     return true;

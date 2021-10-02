@@ -109,6 +109,7 @@ int Emit::CreateController()
 		isActive = true;
 		emit(Buttons::CLEAR, true);
 	}
+	return 0;
 }
 // Reset will kill input! Input is never sent before reset is called
 // This needs to be a loop

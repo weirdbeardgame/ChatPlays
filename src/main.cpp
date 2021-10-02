@@ -1,33 +1,26 @@
 #include <iostream>
 #include "settings.h"
 #include "message.h"
-
-static Twitch* twitchConnect;
-static Emit* controller;
+#include "twitch.h"
 
 void twitch()
 {
-    bool isActive = twitchConnect->login();
-    while(isActive)
-    {
-        isActive = twitchConnect->update();
-    }
+    // Why can't the compiler resolve this function?
+    std::thread th(&Twitch::create);
+    th.join();
 }
 
 void manualControl()
 {
-    Connect connection;
-    bool input = controller->CreateController();
-    std::cout << "Start " << input << std::endl;
     std::thread th(&Emit::CreateController, Emit());
     th.join();
 }
 
 int main()
 {
-    twitchConnect = new Twitch();
-    controller = new Emit();
-    Settings* settings = new Settings(controller, &twitchConnect->setting);
+    //twitchConnect = new Twitch();
+    //controller = new Emit();
+    //Settings* settings = new Settings(controller, &twitchConnect->setting);
     bool isActive = true;
     char command;
 
@@ -52,7 +45,7 @@ int main()
                 break;
 
             case 's':
-                settings->init();
+                //settings->init();
                 break;
 
             default:
