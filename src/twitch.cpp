@@ -54,27 +54,29 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
     j[0]["channelName"].get_to(p.channelName);
 }
 
-void Twitch::create()
+void Twitch::create(Message* q, TwitchInfo* s)
 {
     Twitch t;
-    if (t.login())
+    if (t.login(q, s))
     {
         t.update();
     }
 }
 
-bool Twitch::login()
+bool Twitch::login(Message* q, TwitchInfo* s)
 {
+    settings = *s;
     if (connection.open(address.c_str(), "6667"))
     {
-        std::string buf1 = ("PASS " + setting.oauthToken + "\r\n");
+        queue = q;
+        std::string buf1 = ("PASS " + settings.oauthToken + "\r\n");
         if (connection.sendBytes(buf1.data(), buf1.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
             return false;
         }
 
-        std::string buf2 = ("NICK " + setting.userName + "\r\n");
+        std::string buf2 = ("NICK " + settings.userName + "\r\n");
         if (connection.sendBytes(buf2.c_str(), buf2.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
@@ -85,7 +87,7 @@ bool Twitch::login()
 
         if (!isJoined)
         {
-            std::string buf4 = ("JOIN #" + setting.channelName + "\r\n");
+            std::string buf4 = ("JOIN #" + settings.channelName + "\r\n");
             if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
             {
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
@@ -128,12 +130,9 @@ bool Twitch::update()
                 return false;
             }
         }
-        else
+        else if (buffer.find("PRIVMSG ") != std::string::npos)
         {
-            // Just remeber. This isn't accessible outside of this class.
-            // We need to break this twitch connection and others out on their own thread.
-            // Need to work on thread sync and the passing of messages.
-            queue.enque(com);
+            queue->enque(com);
         }
 
         com.clear();

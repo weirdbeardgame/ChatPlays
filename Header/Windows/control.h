@@ -6,8 +6,10 @@
 #include <ViGEm/Client.h>
 #include <iostream>
 #include <cstdint>
-#include "json.hpp"
 #include <map>
+
+#include "message.h"
+#include "json.hpp"
 
 #pragma comment(lib, "setupapi.lib")
 
@@ -91,6 +93,8 @@ private:
     Buttons cmd;
     bool emitFail;
 
+    Message queue;
+
 public:
     Emit();
     Emit(json j);
@@ -106,7 +110,7 @@ public:
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
-    int CreateController();
+    int CreateController(Message* q, bool manual);
     void emit(Buttons cmd, bool manualControl);
     void poll();
     void moveABS(axisData& axis);

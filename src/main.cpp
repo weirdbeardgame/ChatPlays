@@ -1,33 +1,54 @@
 #include <iostream>
+#include <vector>
+#include <thread>
+#include <mutex>
+
 #include "settings.h"
 #include "message.h"
 #include "twitch.h"
 
+static Message* queue;
+static std::vector<std::thread*> threadPool;
+
+static TwitchInfo* twitchSettings;
+static Emit* controller;
+
 void twitch()
 {
     // Why can't the compiler resolve this function?
-    std::thread th(&Twitch::create);
+    std::thread th(&Twitch::create, queue, twitchSettings);
     th.join();
 }
 
 void manualControl()
 {
-    std::thread th(&Emit::CreateController, Emit());
+    std::thread th(&Emit::CreateController, Emit(), queue, true);
     th.join();
 }
 
+void startBot()
+{
+    threadPool.push_back(new std::thread(&Emit::CreateController, Emit(), queue, false));
+    threadPool.push_back(new std::thread(&Twitch::create, queue, twitchSettings));
+    threadPool[1]->join();
+}
+
+// ToDo. Load settings
+
 int main()
 {
-    //twitchConnect = new Twitch();
-    //controller = new Emit();
-    //Settings* settings = new Settings(controller, &twitchConnect->setting);
+    twitchSettings = new TwitchInfo();
+    controller = new Emit();
+    Settings* settings = new Settings(controller, twitchSettings);
+    queue = new Message();
     bool isActive = true;
     char command;
 
     std::cout << "Avalible Commands: " << std::endl
-    << "t: Twitch" << std::endl
+    << "t: Test Twitch" << std::endl
     << "c: Manually control bot" << std::endl
-    << "s: Edit Settings" << std::endl;
+    << "s: Start Bot in chat play mode" << std::endl
+    << "e: Edit Settings" << std::endl;
 
     while(isActive)
     {
@@ -45,7 +66,11 @@ int main()
                 break;
 
             case 's':
-                //settings->init();
+                startBot();
+                break;
+
+            case 'e':
+                settings->init();
                 break;
 
             default:

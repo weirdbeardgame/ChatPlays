@@ -38,20 +38,20 @@ private:
     std::string buffer;
     std::string address = "irc.chat.twitch.tv";
     std::string pong = "PONG :tmi.twitch.tv\r\n";
-    TwitchInfo setting;
 
     Connect connection;
     Emit controller;
 
-    Message queue;
+    Message* queue;
+    TwitchInfo settings;
 
     bool isJoined = false;
 public:
 
     Twitch() = default;
-    bool login();
+    bool login(Message* q, TwitchInfo* s);
 
-    static void create();
+    static void create(Message* q, TwitchInfo* s);
 
     // bool open(std::string address); for other service integration like discord?
     // recieve commands from chat and parse

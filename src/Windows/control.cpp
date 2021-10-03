@@ -64,20 +64,23 @@ void Emit::poll()
 	// Recieve commands from chat and press into emit
 	while (isActive)
 	{
-		std::string keyCode;
-		std::cout << "Enter a keycode: ";
-		std::cin >> keyCode;
-
+		std::string keyCode = queue.dequeue();
 		if (keyCode == "Exit")
 		{
 			isActive = false;
 		}
-		cmd = GetCommands(keyCode);
-		emit(cmd, false);
+		else
+		{
+			cmd = GetCommands(keyCode);
+			if (cmd != Buttons::CLEAR)
+			{
+				emit(cmd, false);
+			}
+		}
 	}
 }
 
-int Emit::CreateController()
+int Emit::CreateController(Message* q, bool manual)
 {
 	driver = vigem_alloc();
 	if (driver == nullptr)
@@ -107,7 +110,16 @@ int Emit::CreateController()
 		}
 		vigem_target_x360_register_notification(driver, xbox, notification, nullptr);
 		isActive = true;
-		emit(Buttons::CLEAR, true);
+		
+		if (manual)
+		{
+			emit(Buttons::CLEAR, true);
+		}
+		else
+		{
+			poll();
+			queue = *q;
+		}
 	}
 	return 0;
 }

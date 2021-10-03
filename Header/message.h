@@ -18,6 +18,12 @@ private:
 	std::condition_variable condition;
 	std::queue<std::string> messageQueue;
 public:
+	Message() = default;
+	Message(const std::string m);
+	Message(const Message& m);
+	Message(const Message&& m) noexcept;
+	Message& operator=(Message& m);
+	Message& operator=(Message&& m) noexcept;
 	std::string dequeue();
 	void enque(std::string message);
 };
