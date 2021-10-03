@@ -1,23 +1,25 @@
 #include "Windows/control.h"
-#include <windows.h>
+#include <Windows.h>
+#include <iostream>
 #include <stdio.h>
+#include <thread>
+#include <mutex>
 
 Emit::Emit()
 {
 	control = json
 	{
-		"Emit" ,
-		{
-			{"commands", commands},
-			//{"controller", controller},
-		}
+		{"commands", commands},
+		//{"controller", controller},
 	};
 
 }
 
 Emit::Emit(json j)
 {
-	//from_json(j, *this);
+#ifdef __linux__
+	from_json(j, *this);
+#endif
 }
 
 void Emit::save(json& j, bool isDefault)
@@ -25,136 +27,187 @@ void Emit::save(json& j, bool isDefault)
 	if (isDefault)
 	{
 		Emit e = Emit();
-		j.push_back(e.control);
+		j += e.control;
 	}
 	else
 	{
-		j.push_back(control);
+		j += control;
 	}
 }
 
 void Emit::initalConfig()
 {
-
 }
 
-int Emit::CreateController()
+VOID CALLBACK notification(
+	PVIGEM_CLIENT Client,
+	PVIGEM_TARGET Target,
+	UCHAR LargeMotor,
+	UCHAR SmallMotor,
+	UCHAR LedNumber,
+	LPVOID UserData
+)
 {
+	static int count = 1;
 
-	dStat = 1;
+	// Send Data to Twitch Chat. Rumble Goes BRRRRRRR
+	/*std::cout.width(3);
+	std::cout << count++ << " ";
+	std::cout.width(3);
+	std::cout << (int)LargeMotor << " ";
+	std::cout.width(3);
+	std::cout << (int)SmallMotor << std::endl;*/
+}
 
-	// Get the driver attributes (Vendor ID, Product ID, Version Number)
-	if (!vJoyEnabled()) 
+void Emit::poll()
+{
+	// Recieve commands from chat and press into emit
+	while (isActive)
 	{
-		printf("Function vJoyEnabled Failed - make sure that vJoy is installed and enabled\n");
-		int dummy = getchar();
-		dStat = -2;
-		return false;
-	}
-	else 
-	{
-		// Why did they use a wide const char here?
-		wprintf(L"Vendor: %s\nProduct :%s\nVersion Number:%s\n", static_cast<TCHAR*> (GetvJoyManufacturerString()), static_cast<TCHAR*>(GetvJoyProductString()), static_cast<TCHAR*>(GetvJoySerialNumberString()));
-	};
-
-	VjdStat driverCheck = GetVJDStatus(dStat);
-	switch (driverCheck)
-	{
-	case VJD_STAT_OWN:
-		printf("vJoy Device %d is already owned by this feeder\n", dStat);
-		break;
-	case VJD_STAT_FREE:
-		printf("vJoy Device %d is free\n", dStat);
-		break;
-	case VJD_STAT_BUSY:
-		printf("vJoy Device %d is already owned by another feeder\nCannot continue\n", dStat);
-		return -3;
-	case VJD_STAT_MISS:
-		printf("vJoy Device %d is not installed or disabled\nCannot continue\n", dStat);
-		return -4;
-	default:
-		printf("vJoy Device %d general error\nCannot continue\n", dStat);
-		return -1;
-	};
-
-	if (driverCheck == VJD_STAT_OWN || driverCheck == VJD_STAT_FREE)
-	{
-		// The driver is claimable!
-		int err = AcquireVJD(dStat);
-		if (err < 0)
+		std::string keyCode = queue.dequeue();
+		if (keyCode != std::string())
 		{
-			printf("Error claiming device! \n");
+			if (keyCode == "Exit")
+			{
+				isActive = false;
+			}
+			else
+			{
+				cmd = GetCommands(keyCode);
+				if (cmd != Buttons::CLEAR)
+				{
+					emit(cmd, false);
+				}
+			}
 		}
 	}
-
-	// The device is claimed!
-	controller.bDevice = (BYTE)dStat;
 }
 
-bool Emit::emit(Buttons& cmd)
+int Emit::CreateController(Message* q, bool manual)
 {
-	axisData axis;
-	switch (cmd)
+	driver = vigem_alloc();
+	if (driver == nullptr)
 	{
-	case Buttons::UP:
-		// Set to max values of Xinput
-		axis.set(0, 32767, 0, 0); 
-		break;
-	case Buttons::DOWN:
-		axis.set(0, -32767, 0, 0);
-		break;
-	case Buttons::RIGHT:
-		axis.set(32767, 0, 0, 0);
-		break;
-	case Buttons::LEFT:
-		axis.set(-32767, 0, 0, 0);
-		break;
-	}
-
-	if (cmd > Buttons::RIGHT)
-	{
-		return pressBtn(cmd);
+		std::cerr << "Oops! Driver no allocate! Unga Bunga. Me confused!" << std::endl;
+		isActive = false;
+		return -1;
 	}
 	else
 	{
-		moveABS(axis);
-		Sleep(1);
+		// We have driver. Now establish bus connection.
+		const auto bus = vigem_connect(driver);
+		if (!VIGEM_SUCCESS(bus))
+		{
+			std::cerr << "ViGEm Bus connection failed with error code: 0x" << std::hex << bus << std::endl;
+			isActive = false;
+			return -1;
+		}
+
+		xbox = vigem_target_x360_alloc();
+		const auto plugEv = vigem_target_add(driver, xbox);
+		if (!VIGEM_SUCCESS(plugEv))
+		{
+			std::cerr << "Target plugin failed with error code: 0x" << std::hex << plugEv << std::endl;
+			isActive = false;
+			return -1;
+		}
+		vigem_target_x360_register_notification(driver, xbox, notification, nullptr);
+		isActive = true;
+		
+		if (manual)
+		{
+			emit(Buttons::CLEAR, true);
+		}
+		else
+		{
+			poll();
+			queue = *q;
+		}
+	}
+	return 0;
+}
+// Reset will kill input! Input is never sent before reset is called
+// This needs to be a loop
+void Emit::emit(Buttons cmd, bool manualControl)
+{
+	std::string keyCode;
+	while (isActive)
+	{
+		report = new XUSB_REPORT();
+		Sleep(500);
 		resetABS();
+		releaseBtn(cmd);
+		vigem_target_x360_update(driver, xbox, *report);
+		if (manualControl)
+		{
+			// I need a better way to poll this.
+			std::cout << "Enter a keycode: ";
+			std::cin >> keyCode;
+
+			if (keyCode == "Exit")
+			{
+				isActive = false;
+			}
+			cmd = GetCommands(keyCode);
+		}
+		axisData axis;
+		switch (cmd)
+		{
+		case Buttons::UP:
+			// Set to max values of Xinput
+			axis.set(0, 32767, 0, 0);
+			break;
+		case Buttons::DOWN:
+			axis.set(0, -32768, 0, 0);
+			break;
+		case Buttons::RIGHT:
+			axis.set(32767, 0, 0, 0);
+			break;
+		case Buttons::LEFT:
+			axis.set(-32768, 0, 0, 0);
+			break;
+		}
+
+		if (cmd > Buttons::RIGHT)
+		{
+			pressBtn(cmd);
+		}
+		else
+		{
+			moveABS(axis);
+		}
+		vigem_target_x360_update(driver, xbox, *report);
 	}
 }
 
-int Emit::pressBtn(Buttons& btn)
+void Emit::pressBtn(Buttons& btn)
 {
-	return SetBtn(TRUE, dStat, buttonPos[btn]);
-	//Sleep(1);
-	//return ResetButtons(buttonPos[btn]);
+	if (report == nullptr)
+	{
+		report = new XUSB_REPORT();
+	}
+	report->wButtons |= buttonPos[btn];
 }
 
-int Emit::releaseBtn(Buttons& btn)
+void Emit::releaseBtn(Buttons& btn)
 {
-	JOYSTICK_POSITION pos;
-	memset(&pos, 0, sizeof(pos));
-	pos.lButtons &= ~(1 << buttonPos[btn]);
-	btn = Buttons::CLEAR;
-	return UpdateVJD(dStat, &pos);
+	report->wButtons = 0; //&= ~(1 << buttonPos[btn]);
 }
 
-int Emit::moveABS(axisData axis)
+void Emit::moveABS(axisData& axis)
 {
-	JOYSTICK_POSITION pos;
-	memset(&pos, 0, sizeof(pos));
-	pos.wAxisX = axis.get(0);
-	pos.wAxisY = axis.get(1);
-	pos.wAxisVX = axis.get(2);
-	pos.wAxisVY = axis.get(3);
-	return UpdateVJD(dStat, &pos);
+	report->sThumbLX = axis.get(0);
+	report->sThumbLY = axis.get(1);
+	report->sThumbRX = axis.get(2);
+	report->sThumbRY = axis.get(3);
 }
 
-int Emit::resetABS()
+void Emit::resetABS()
 {
-	JOYSTICK_POSITION pos;
-	memset(&pos, 0, sizeof(pos));
-	return UpdateVJD(dStat, &pos);
+	report->sThumbLX = 0;
+	report->sThumbLY = 0;
+	report->sThumbRX = 0;
+	report->sThumbRY = 0;
 }
 
 Buttons& Emit::GetCommands(std::string key)

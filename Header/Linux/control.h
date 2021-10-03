@@ -1,7 +1,9 @@
 #pragma once
 #include <map>
+#include <mutex>
 #include <queue>
 #include <vector>
+#include <thread>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -14,7 +16,7 @@
 
 #include "json.hpp"
 
-enum Buttons {UP, DOWN, LEFT, RIGHT, A, B, X, Y, START, SELECT, L1, R1, L2, R2, L3, R3, EXIT};
+enum Buttons {UP, DOWN, LEFT, RIGHT, RUP, RDOWN, RLEFT, RRIGHT, DUP, DDOWN, DLEFT, DRIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT};
 
 using json = nlohmann::json;
 
@@ -26,6 +28,16 @@ static std::map<Buttons, std::string> controlNames =
     {DOWN, "DOWN"},
     {LEFT, "LEFT"},
     {RIGHT, "RIGHT"},
+    {RUP, "RStick Up"},
+    {RDOWN, "RStick Down"},
+    {RLEFT, "RStick Left"},
+    {RRIGHT, "RStick Right"},
+    {DUP, "Dpad Up"},
+    {DDOWN, "Dpad Down"},
+    {DLEFT, "Dpad Left"},
+    {DRIGHT, "Dpad Right"},
+    {L2, "L2"},
+    {R2, "R2"},
     {A, "A"},
     {B, "B"},
     {X, "X"},
@@ -34,8 +46,6 @@ static std::map<Buttons, std::string> controlNames =
     {SELECT, "SELECT"},
     {L1, "L1"},
     {R1, "R1"},
-    {L2, "L2"},
-    {R2, "R2"},
     {L3, "L3"},
     {R3, "R3"}
 };
@@ -48,12 +58,142 @@ struct Controller
     fs::path eventPath = "/dev/input";
     std::string controllerName;
     std::map<Buttons, input_event> mappedControls;
-    std::vector<input_absinfo> abs;
-    std::string uniqueID;
-    int driverVersion;
+    std::map<Buttons, uint32_t>buttonCodes = 
+    {
+        {LEFT, ABS_X},
+        {RIGHT, ABS_X},
+        {UP, ABS_Y},
+        {DOWN, ABS_Y},
+        {RLEFT, ABS_RX},
+        {RRIGHT, ABS_RX},
+        {RUP, ABS_RY},
+        {RDOWN, ABS_RY},
+        {R2, ABS_RZ},
+        {L2, ABS_Z},
+        {DLEFT, ABS_HAT0X},
+        {DRIGHT, ABS_HAT0X},
+        {DUP, ABS_HAT0Y},
+        {DDOWN, ABS_HAT0Y},
+        {A, BTN_SOUTH},
+        {B, BTN_EAST},
+        {START, BTN_START},
+        {SELECT, BTN_SELECT},
+        {Y, BTN_NORTH},
+        {X, BTN_WEST},
+        {R1, BTN_TR},
+        {L1, BTN_TL},
+    };
+    struct std::map<uint32_t, uinput_abs_setup*> abs
+    {
+        // LStick. X, Y
+        {
+            ABS_Y, 
+            new uinput_abs_setup
+            {
+                ABS_Y,
+                input_absinfo
+                {
+                    4095,
+                    0,
+                    65535,
+                    255,
+                    4095
+                }
+            }
+        },
+        {
+            ABS_X,
+            new uinput_abs_setup
+            {
+                ABS_X,
+                input_absinfo
+                {
+                    4095,
+                    0,
+                    65535,
+                    255,
+                    4095
+                }
+            }
+        },
+        // RStick X, Y
+        {
+            ABS_RY, 
+        new uinput_abs_setup
+        {
+            ABS_RY,
+                input_absinfo
+                {
+                    4095,
+                    0,
+                    65535,
+                    255,
+                    4095
+                }
+            }
+        },
+        {
+            ABS_RX, 
+            new uinput_abs_setup
+            {
+                ABS_RX,
+                input_absinfo
+                {
+                    4095,
+                    0,
+                    65535,
+                    255,
+                    4095
+                }
+            }
+        },
+        // RZ, Z
+        {
+            ABS_Z, 
+            new uinput_abs_setup
+            {
+                ABS_Z,
+                input_absinfo
+                {
+                    63,
+                    0,
+                    1023,
+                    255,
+                    63
+                },
+            }
+        },
+        {
+            ABS_RZ,
+            new uinput_abs_setup
+            {
+                ABS_RZ,
+                input_absinfo
+                {
+                    63,
+                    0,
+                    1023,
+                    255,
+                    63
+                },
+            }
+        }
+    };
 
+    std::string uniqueID;
+
+    int driverVersion;
     int fd;
-    struct libevdev *dev;
+
+    input_event ev;
+
+    libevdev *dev;
+    bool pollEvent();
+
+    std::thread createPollThread()
+    {
+        return std::thread(&Controller::pollEvent, this);
+    }
 
     friend void to_json(nlohmann::json& j, const Controller& p);
     friend void from_json(const nlohmann::json& j, Controller& p);
@@ -66,11 +206,11 @@ class Emit
     int fd = 0;
     int maxInput = 0;
 
-    struct libevdev *dev;
-    struct uinput_user_dev device;
-    struct uinput_setup usetup;
-    struct libevdev_uinput *uidev;
-    struct input_absinfo* init;
+    libevdev* dev;
+    uinput_user_dev device;
+    uinput_setup usetup;
+    libevdev_uinput* uidev;
+    input_absinfo* init;
 
     Controller controller;
     std::map<std::string, Buttons> commands
@@ -108,9 +248,9 @@ class Emit
 
     bool CreateController();
     bool emit(Buttons cmd);
-    int moveABS(int ABS, int moveAxis, int flat);
-    int resetABS(int ABS, int flatAxis);
-    int pressBtn(int btn);
-    int releaseBtn(int btn);
+    int moveABS(uint32_t ABS, int moveAxis, int flat);
+    int resetABS(uint32_t ABS, int flatAxis);
+    int pressBtn(uint32_t btn);
+    int releaseBtn(uint32_t btn);
     bool Close();
 };

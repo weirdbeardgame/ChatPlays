@@ -7,8 +7,8 @@
 #include <map>
 
 #ifdef __linux__ 
-#include "control.h"
-#include "connect.h"
+#include "Linux/control.h"
+#include "Linux/connect.h"
 #elif _WIN32
 #include "Windows/winConnect.h"
 #include "Windows/control.h"
@@ -24,18 +24,18 @@ class Settings
 {
     private:
     std::fstream fileStream;
-    fs::path filePath;
-    Emit controllerSettings;
-    TwitchInfo twitchSettings;
+    fs::path filePath = "settings/settings.json";
+    Emit* controllerSettings;
+    TwitchInfo* twitchSettings;
     json j;
 
     public:
     Settings();
-    Settings(std::string fileName);
+    Settings(Emit* c, TwitchInfo* t);
     void init();
     void edit();
 
-    bool load(std::string fileName, std::string delimit = " ");
-    bool save(std::string fileName);
+    bool load();
+    bool save();
 
 };

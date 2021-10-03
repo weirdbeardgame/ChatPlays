@@ -3,20 +3,19 @@
 Settings::Settings()
 {
     j = json();
-    filePath = std::string();
 }
 
-Settings::Settings(std::string fileName)
+Settings::Settings(Emit* c, TwitchInfo* t)
 {
-    filePath = fileName;
-    j = json(filePath.make_preferred());
+    twitchSettings = t;
+    controllerSettings = c;
+    load();
 }
 
 void Settings::init()
 {
     char command;
-    std::cout << "Avalible Commands are: " << std::endl;
-    std::cout << "e: Edit settings" << std::endl
+    std::cout << "Avalible Commands are: " << std::endl << "e: Edit settings" << std::endl
     << "q: Quit" << std::endl; 
     std::cin >> command;
     switch (command)
@@ -38,50 +37,71 @@ void Settings::init()
 void Settings::edit()
 {
     json j;
-    filePath = "settings/settings.json";
+    char command;
+
+
+    std::cout << "T: twitch settings" << std::endl << "C: controller settings" << std::endl;
+    std::cin >> command;
+
+    switch (command)
+    {
+        case 'T':
+            if (twitchSettings == nullptr)
+            {
+                twitchSettings = new TwitchInfo();
+            }
+            twitchSettings->Save(j, true);
+            break;
+        case 'C':
+            if (controllerSettings)
+            {
+                controllerSettings = new Emit();
+            }
+            controllerSettings->initalConfig();
+            break;
+    }
+
     if (!fs::exists(filePath))
     {
-        save(filePath.string());
+        save();
     }
 }
 
-bool Settings::load(std::string fileName, std::string delimit)
+bool Settings::load()
 {
-    filePath = fileName;
     if (fs::exists(filePath))
     {
         fileStream.open(filePath, std::ios::in);
         j = j.parse(fileStream);
-        twitchSettings = TwitchInfo(j["TwitchInfo"]); //Psudo load function?
-        controllerSettings = Emit(j["Emit"]);
+        twitchSettings->Load(j); //Psudo load function?
+        controllerSettings = &Emit(j);
     }
     else
     {
-        save(filePath.string());
+        save();
     }
     return true;
 }
 
-bool Settings::save(std::string fileName)
+bool Settings::save()
 {
-    std::cout << "Save" << std::endl;
     if (!fs::exists(filePath.parent_path()))
     {
         fs::create_directory(filePath.parent_path());
     }
     else if (!fs::exists(filePath))
     {
-        //twitchSettings.save(j, true);
-        controllerSettings.initalConfig();
-        controllerSettings.save(j, true);
+        twitchSettings->Save(j, true);
+        controllerSettings->initalConfig();
+        controllerSettings->save(j, true);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();
     }
     else
     {
-        twitchSettings.save(j);
-        controllerSettings.save(j);
+        twitchSettings->Save(j);
+        controllerSettings->save(j);
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();

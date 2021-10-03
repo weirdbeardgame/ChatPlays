@@ -1,6 +1,6 @@
 #include "Windows/winConnect.h"
 
-bool Connect::open(const char* hostName, char* port)
+bool Connect::open(const char* hostName, const char* port)
 {
     WSADATA winSockData;
     if (WSAStartup(MAKEWORD(2, 2), &winSockData) != 0)
@@ -9,8 +9,8 @@ bool Connect::open(const char* hostName, char* port)
         return 1;
     }
 
+    memset(&info, 0, sizeof(info));
     info.ai_family = AF_INET;
-    info.ai_flags = AI_PASSIVE;
     info.ai_socktype = SOCK_STREAM;
     info.ai_protocol = IPPROTO_TCP;
 
@@ -32,6 +32,8 @@ bool Connect::open(const char* hostName, char* port)
             return false;
         }
 
+        //ioctlsocket(sock, FIONBIO, (unsigned long*)1);
+
         int conErr = connect(sock, connectP->ai_addr, connectP->ai_addrlen);
 
         if (conErr != 0)
@@ -45,40 +47,41 @@ bool Connect::open(const char* hostName, char* port)
 
 }
 
-bool Connect::recieve(std::string& buffS)
+char* Connect::recieve()
 {
     int i = 0;
-    int buffSize = 512, buffRecieved = 0;
+    int buffSize = 480, buffRecieved = 0;
     char* buff = new char[512];
-    while (buffRecieved < buffSize)
+    if (i = recv(sock, buff, buffSize, 0) > 0)
     {
         // not equal to catch neg error!!!
-        i = recv(sock, buff + buffRecieved, buffSize, 0);
-        std::cout << buff << std::endl;
+
+        std::cout << "Buff: " << buff << std::endl;
 
         if (i == 0)
         {
             std::cerr << "Connection severed by server" << std::endl;
-            return false;
+            return nullptr;
         }
 
         else if (i < 0)
         {
             std::cerr << "Recieve Err: " << WSAGetLastError() << std::endl;
-            return false;
+            return nullptr;
         }
         if (buffSize < i)
         {
             buffSize = i;
             buff = new char[buffSize];
         }
-        buffRecieved += i;
-        buffSize -= i;
     }
-    buffS = buff;
-    std::cout << buffS << std::endl;
-    delete[] buff;
-    return true;
+    return buff;
+}
+
+bool Connect::openSockFile(fs::path socket, char slot)
+{
+     //open(socket.string().c_str(), slot);
+    return false;
 }
 
 bool Connect::isConnected()
@@ -89,26 +92,6 @@ bool Connect::isConnected()
 std::string Connect::parseCommand(std::string command)
 {
     return strtok(command.data(), "!");
-}
-
-bool Connect::sendAll(std::string buf)
-{
-    size_t size = buf.size();
-    if (sock <= 0)
-    {
-        std::cerr << "Connection terminated" << std::endl;
-        return false;
-    }
-    int i = send(sock, buf.c_str(), size, 0);
-    if (i < 0)
-    {
-        std::cerr << "Send Err: " << strerror(errno) << std::endl;
-        return false;
-    }
-    std::cout << "Buff: " << buf << " Buff Size: " << buf.size() << std::endl;
-    std::cout << "Sent: " << i << std::endl;
-    return true;
-
 }
 
 void Connect::disconnect()

@@ -23,9 +23,27 @@ class Connect
 
     public:
     bool open(const char* hostName, char* port);
-    bool openSockFile(fs::path socket, int slot);
-    bool recieve(std::string &buff);
-    bool sendAll(std::string buf);
+    bool openSockFile(fs::path socket, uint slot);
+    char* recieve();
+    template<typename T>
+    int sendBytes(T val, int siz)
+    {
+        if (sock <= 0)
+        {
+            std::cerr << "Connection terminated" << std::endl;
+            return -1;
+        }
+
+        char* buffer = (char*)&val;
+
+        int size = send(sock, buffer, siz, 0);
+        if (size < 0)
+        {
+            //std::cerr << "Send Err: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return size;
+    }
     bool httpGet();
     bool httpPost();
     std::string parseCommand(std::string s);
