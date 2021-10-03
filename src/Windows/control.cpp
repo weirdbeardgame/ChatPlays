@@ -65,16 +65,19 @@ void Emit::poll()
 	while (isActive)
 	{
 		std::string keyCode = queue.dequeue();
-		if (keyCode == "Exit")
+		if (keyCode != std::string())
 		{
-			isActive = false;
-		}
-		else
-		{
-			cmd = GetCommands(keyCode);
-			if (cmd != Buttons::CLEAR)
+			if (keyCode == "Exit")
 			{
-				emit(cmd, false);
+				isActive = false;
+			}
+			else
+			{
+				cmd = GetCommands(keyCode);
+				if (cmd != Buttons::CLEAR)
+				{
+					emit(cmd, false);
+				}
 			}
 		}
 	}
