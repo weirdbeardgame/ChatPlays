@@ -26,7 +26,7 @@ Controller::Controller(const Controller& c)
 
 Emit::Emit(json j)
 {
-    from_json(j, *this);
+    //from_json(j, *this);
 }
 
 void Emit::save(json &j, bool isDefault)
@@ -42,133 +42,127 @@ void Emit::save(json &j, bool isDefault)
     }
 }
 
-bool Controller::pollEvent()
+input_event Controller::pollEvent()
 {
     int err = 0;
-    err = read(fd, &ev, sizeof(ev));
+    input_event event;
+    err = read(fd, &event, sizeof(ev));
 
-    err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
+    //err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
     if (err < 0)
     {
         printf("Failed read: ", strerror(errno) + '\n');
-        return false;
+        return input_event();
     }
-    else if (ev.type > 0)
-    {
-        //printf("ev: 0x%02x", ev.code + ' \n');
-        return true;
-    }
+    //printf("ev: 0x%02x", ev.code + ' \n');
+    return event;
 }
 
-void Emit::initalConfig()
+void Emit::listControllers()
 {
     // List devices and select one to save.
-    std::vector<Controller> controlSelect(15);
-    uint32_t* supportedEvents;
     for (auto &entry: fs::directory_iterator("/dev/input"))
     {
-        Controller createControl = Controller();
         std::string temp = entry.path().filename();
+
+        int i = 0;
+        int file = 0;
+
+        libevdev* dev;
 
         if (temp.compare(0, 5, "event") == 0)
         {
-            std::cout << "Temp: " << temp << std::endl;
-            createControl.fd = open(entry.path().c_str(), O_RDONLY);
-            int err = libevdev_new_from_fd(createControl.fd, &createControl.dev);
+            // fd doesn't carry through and get's lost. Read is literally polling blank yet somewhat initalized data
+            //std::cout << "Temp: " << temp << std::endl;
+            file = open(entry.path().c_str(), O_RDONLY);
+            int err = libevdev_new_from_fd(file, &dev);
             if (err < 0)
             {
                 // If it's just a bad file descriptor, don't bother logging, but otherwise, log it.
                 if (err != -9)
                 {
                     printf("Failed to connect to device at %s, the error was: %s", entry.path(), strerror(-err));
-                    libevdev_free(createControl.dev);
-                    close(createControl.fd);
+                    libevdev_free(dev);
+                    close(fd);
                 }
                 else
                 {
                     printf("Invalid FD \n");
-                    close(createControl.fd);
+                    close(fd);
                     return;
                 }
             }
-            if (createControl.dev != nullptr)
+
+            if (libevdev_has_event_type(dev, EV_KEY) && libevdev_has_event_type(dev, EV_ABS))
             {
-                if (libevdev_has_event_type(createControl.dev, EV_KEY) && libevdev_has_event_type(createControl.dev, EV_ABS))
-                {
-                    createControl.eventPath = createControl.eventPath / temp;
-                    createControl.controllerName = libevdev_get_name(createControl.dev);
-                    if (createControl.controllerName != std::string() || createControl.controllerName != "")
-                    {
-                        controlSelect.push_back(createControl);
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                std::cout << i << " Dev: " << libevdev_get_name(dev) << std::endl;
+                // Since it's being closed anyways. Just tell it to fuck off ourselves. We can reopen in the lower config sections
+                close(file);
+                libevdev_free(dev);
+                controlSelect.push_back(entry.path());
             }
         }
-        else
-        {
-            continue;
-        }
+        i += 1;
     }
+}
 
-    int j = -1;
+
+Controller Emit::selectController()
+{
+    listControllers();
+    Controller control;
+    int j = 0;
+
     if (controlSelect.size() > 0)
     {
-        for (int i = 0; i < controlSelect.size(); i++)
-        {
-            std::cout << "Avalible Controllers " << i << ": " <<  controlSelect[i].controllerName << std::endl;
-        }
+        // We check negative to make sure j only gets entered into once
+        // And because index 0 would be a valid index
 
-        if (j < 0)
-        {
-            std::cout << "> ";
-            std::cin >> j;
-        }
+        std::cout << "> ";
+        std::cin >> j;
 
-        // Does EvDev have a method for detecting the currently selected ABS codes? Each controller will be different!
-        controller = controlSelect[j];
+        // Start to create the actual controller device in here
+        control.fd = open(controlSelect[j].c_str(), O_RDONLY | O_NONBLOCK);
+        libevdev_new_from_fd(control.fd, &control.dev);
+
+        control.driverVersion = libevdev_get_driver_version(control.dev);
+        control.controllerName = libevdev_get_name(control.dev);
+        control.uniqueID = libevdev_get_uniq(control.dev);
     }
+    return control;
+}
 
-    bool polled;
-    std::thread th = controller.createPollThread();
-    std::condition_variable condition;
-
+void Emit::initalConfig()
+{
+    controller = selectController();
+    // This is where the car crash happens kiddos
     for (int i = 0; i < controlNames.size(); i++)
     {
-        std::mutex m;
-        std::unique_lock<std::mutex> lck(m);
-        while (condition.wait_for(lck, std::chrono::seconds(5)) == std::cv_status::timeout)
+        std::cout << "Configure: " << controlNames[(Buttons)i];
+        read(controller.fd, &controller.ev, sizeof(controller.ev));
+
+        switch (controller.ev.type)
         {
-            switch (controller.ev.type)
-            {
-                case EV_ABS:
-                    input_absinfo absTemp;
-                    // I want code then I poll for ABS Info
-                    ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
-                    if (absTemp.maximum > 0 && !controller.abs.contains(controller.ev.code))
-                    {
-                        //controller.abs.try_emplace(controller.ev.code, absTemp);
-                    }
+            case EV_ABS:
+                input_absinfo absTemp;
+                // I want code then I poll for ABS Info
+                ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
+                if (absTemp.maximum > 0 && !controller.abs.contains(controller.ev.code))
+                {
+                    //controller.abs.try_emplace(controller.ev.code, absTemp);
+                }
+                controller.mappedControls.try_emplace((Buttons)i, controller.ev);
+                break;
+
+                case EV_KEY:
                     controller.mappedControls.try_emplace((Buttons)i, controller.ev);
                     break;
 
-                    case EV_KEY:
-                        controller.mappedControls.try_emplace((Buttons)i, controller.ev);
-                        break;
-
-                default:
-                    controller.pollEvent();
-                    break;
-                }
-        }
-
+            default:
+                controller.ev = controller.pollEvent();
+                break;
+            }
     }
-
-    controller.uniqueID = libevdev_get_uniq(controller.dev);
-    controller.driverVersion = libevdev_get_driver_version(controller.dev);
 }
 
 bool Emit::CreateController(Message* q, bool manualControl)
@@ -355,112 +349,6 @@ bool Emit::emit(Buttons keyCode)
 bool Emit::Close()
 {
     libevdev_uinput_destroy(uidev);
-    libevdev_free(dev);
+    libevdev_free(controller.dev);
     return 0;
-}
-
-void to_json(json& j, const input_absinfo& c)
-{
-    j = json
-    {
-        "input_absinfo",
-        {
-            {"value", c.value},
-            {"flat", c.flat},
-            {"fuzz", c.fuzz},
-            {"maximum", c.maximum},
-            {"minimum", c.minimum},
-            {"resolution", c.resolution}
-        }
-    };
-}
-
-void from_json(const json& j, input_absinfo& c)
-{
-    j.at("value").get_to(c.value);
-    j.at("flat").get_to(c.flat);
-    j.at("fuzz").get_to(c.fuzz);
-    j.at("maximum").get_to(c.maximum);
-    j.at("minimum").get_to(c.minimum);
-    j.at("resolution").get_to(c.resolution);
-}
-
-void to_json(json& j, const timeval& t)
-{
-    j = json
-    {
-        {"tv_sec", t.tv_sec},
-        {"tv_usec", t.tv_usec},
-    };
-}
-
-void from_json(const json& j, timeval& t)
-{
-    j.at("tv_sec").get_to(t.tv_sec);
-    j.at("tv_usec").get_to(t.tv_usec);
-}
-
-
-void to_json(json& j, const input_event& e)
-{
-    j = json
-    {
-        {"type", e.type},
-        {"code", e.code},
-        {"value", e.value},
-        {"time", e.time},
-    };
-}
-
-void from_json(const json& j, input_event& e)
-{
-    j.at("type").get_to(e.type);
-    j.at("code").get_to(e.code);
-    j.at("value").get_to(e.value);
-    j.at("time").get_to(e.time);
-}
-
-
-void to_json(json& j, const Emit& c)
-{
-    j = json
-    {
-        "ControlInfo" , 
-        {
-            {"commands", c.commands},
-            {"controller", c.controller},
-        }
-    };
-}
-
-void from_json(const json& j, Emit& c)
-{
-    j.at("commands").get_to(c.commands);
-    j.at("controller").get_to(c.controller);
-}
-
-void to_json(json& j, const Controller& c)
-{
-    j = json
-    {
-        "Controller",
-        {
-            {"fd", c.fd},
-            {"uniqueID", c.uniqueID},
-            {"driverVersion", c.driverVersion},
-            {"controllerName", c.controllerName},
-            {"mappedControls", c.mappedControls},
-            //{"absInfo", c.abs},
-        }
-    };
-}
-
-void from_json(const nlohmann::json& j, Controller& c)
-{
-    j.at("fd").get_to(c.fd);
-    j.at("uniqueID").get_to(c.uniqueID);
-    j.at("driverVersion").get_to(c.driverVersion);
-    j.at("controllerName").get_to(c.controllerName);
-    j.at("mappedControls").get_to(c.mappedControls);
-    //j.at("absInfo").get_to(c.abs);
 }

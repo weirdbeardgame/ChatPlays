@@ -17,14 +17,17 @@
 #include "json.hpp"
 #include "message.h"
 
-
-
 enum Buttons {UP, DOWN, LEFT, RIGHT, RUP, RDOWN, RLEFT, RRIGHT, DUP, DDOWN, DLEFT, DRIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT};
 
 using json = nlohmann::json;
 
 namespace fs = std::filesystem;
 
+
+/*************************************************************************************************************************** 
+* The actual linking bit between chat and what's being pressed
+* All strings represent chat commands. Enum is what the system will parse and determine what to press from there.
+***************************************************************************************************************************/
 static std::map<Buttons, std::string> controlNames = 
 {
     {UP, "UP"},
@@ -53,14 +56,15 @@ static std::map<Buttons, std::string> controlNames =
     {R3, "R3"}
 };
 
+
+// This is supposed to represent the actual controller in memory as it's created. 
+// It can hold it's own assigned controller data and mappings
 struct Controller
 {
     Controller();
     Controller(const Controller& c);
 
-    fs::path eventPath = "/dev/input";
-    std::string controllerName;
-    std::map<Buttons, input_event> mappedControls;
+    // Consider all of the below a default mapping
     std::map<Buttons, uint32_t>buttonCodes = 
     {
         {LEFT, ABS_X},
@@ -183,23 +187,23 @@ struct Controller
         }
     };
 
+    // All of this data is intended to create as convincing a device as possible
     std::string uniqueID;
+    std::string controllerName;
 
-    int driverVersion;
+    fs::path eventPath = "/dev/input";
+
     int fd;
+    int driverVersion;
 
     input_event ev;
-
     libevdev *dev;
-    bool pollEvent();
 
-    std::thread createPollThread()
-    {
-        return std::thread(&Controller::pollEvent, this);
-    }
+    input_event pollEvent();
+    std::map<Buttons, input_event> mappedControls;
 
-    friend void to_json(nlohmann::json& j, const Controller& p);
-    friend void from_json(const nlohmann::json& j, Controller& p);
+    //friend void to_json(nlohmann::json& j, const Controller& p);
+    //friend void from_json(const nlohmann::json& j, Controller& p);
 
 };
 
@@ -209,9 +213,6 @@ class Emit
     int fd = 0;
     int maxInput = 0;
 
-    libevdev* dev;
-    uinput_user_dev device;
-    uinput_setup usetup;
     libevdev_uinput* uidev;
     input_absinfo* init;
 
@@ -239,17 +240,23 @@ class Emit
         {"Exit", EXIT}
     };
     std::queue<Buttons>controlQueue;
+
+    std::vector<fs::path> controlSelect;
     public:
+
     Emit() = default;
     Emit(json j);
 
     void initalConfig();
+    Controller selectController();
+    void listControllers();
+
     Buttons GetCommands(std::string key);
 
     json control;
     void save(json &j, bool isDefault = false);
-    friend void to_json(nlohmann::json& j, const Emit& p);
-    friend void from_json(const nlohmann::json& j, Emit& p);
+    //friend void to_json(nlohmann::json& j, const Emit& p);
+    //friend void from_json(const nlohmann::json& j, Emit& p);
 
     bool CreateController(Message* queue, bool manualControl);
     bool emit(Buttons cmd);
