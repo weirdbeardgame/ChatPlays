@@ -15,6 +15,9 @@
 #include <libevdev/libevdev-uinput.h>
 
 #include "json.hpp"
+#include "message.h"
+
+
 
 enum Buttons {UP, DOWN, LEFT, RIGHT, RUP, RDOWN, RLEFT, RRIGHT, DUP, DDOWN, DLEFT, DRIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT};
 
@@ -212,6 +215,8 @@ class Emit
     libevdev_uinput* uidev;
     input_absinfo* init;
 
+    Message* queue;
+
     Controller controller;
     std::map<std::string, Buttons> commands
     {
@@ -235,7 +240,7 @@ class Emit
     };
     std::queue<Buttons>controlQueue;
     public:
-    Emit();
+    Emit() = default;
     Emit(json j);
 
     void initalConfig();
@@ -246,7 +251,7 @@ class Emit
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
-    bool CreateController();
+    bool CreateController(Message* queue, bool manualControl);
     bool emit(Buttons cmd);
     int moveABS(uint32_t ABS, int moveAxis, int flat);
     int resetABS(uint32_t ABS, int flatAxis);

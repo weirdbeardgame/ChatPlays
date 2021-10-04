@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
+#include <string.h>
 #include <iostream>
 #include <stdio.h>
 #include <netdb.h>
@@ -25,8 +26,7 @@ class Connect
     bool open(const char* hostName, char* port);
     bool openSockFile(fs::path socket, uint slot);
     char* recieve();
-    template<typename T>
-    int sendBytes(T val, int siz)
+    inline int sendBytes(const char* val, int siz)
     {
         if (sock <= 0)
         {
@@ -34,14 +34,15 @@ class Connect
             return -1;
         }
 
-        char* buffer = (char*)&val;
+        std::cout << "Buffer: " << val << std::endl;
 
-        int size = send(sock, buffer, siz, 0);
-        if (size < 0)
+        int size = send(sock, val, siz, 0);
+        if (size <= 0)
         {
-            //std::cerr << "Send Err: " << strerror(errno) << std::endl;
+            std::cerr << "Send Err: " << strerror(errno) << std::endl;
             return false;
         }
+        std::cout << "Size: " << size << std::endl;
         return size;
     }
     bool httpGet();

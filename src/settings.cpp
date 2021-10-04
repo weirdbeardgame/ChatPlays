@@ -74,7 +74,7 @@ bool Settings::load()
         fileStream.open(filePath, std::ios::in);
         j = j.parse(fileStream);
         twitchSettings->Load(j); //Psudo load function?
-        controllerSettings = &Emit(j);
+        //controllerSettings = Emit(j);
     }
     else
     {

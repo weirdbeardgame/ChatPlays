@@ -24,18 +24,6 @@ Controller::Controller(const Controller& c)
     controllerName = c.controllerName;
 }
 
-Emit::Emit()
-{
-    control = json
-    {
-        "Emit" , 
-        {
-            {"commands", commands},
-            {"controller", controller},
-        }
-    };
-}
-
 Emit::Emit(json j)
 {
     from_json(j, *this);
@@ -182,7 +170,8 @@ void Emit::initalConfig()
     controller.uniqueID = libevdev_get_uniq(controller.dev);
     controller.driverVersion = libevdev_get_driver_version(controller.dev);
 }
-bool Emit::CreateController()
+
+bool Emit::CreateController(Message* q, bool manualControl)
 {
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0)
@@ -192,6 +181,8 @@ bool Emit::CreateController()
     }
     else
     {
+        queue = q;
+
         if (ioctl(fd, UI_SET_EVBIT, EV_ABS) < 0)
         {
             printf("IoCtrl EVBit Error\n");
