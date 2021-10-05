@@ -1,7 +1,9 @@
+#include <poll.h>
 #include <chrono>
-#include "Linux/control.h"
-#include <condition_variable>
 #include <functional>
+#include <condition_variable>
+
+#include "Linux/control.h"
 
 Controller::Controller()
 {
@@ -46,13 +48,16 @@ input_event Controller::pollEvent()
 {
     int err = 0;
     input_event event;
-    err = read(fd, &event, sizeof(ev));
+    err = read(fd, &event, sizeof(event));
 
     //err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
     if (err < 0)
     {
-        printf("Failed read: ", strerror(errno) + '\n');
-        return input_event();
+        if (err != EINVAL)
+        {
+            std::cout << " Failed read: " << err << "FD: " << fd << " "<< strerror(errno)  << std::endl;
+            return input_event();
+        }
     }
     //printf("ev: 0x%02x", ev.code + ' \n');
     return event;
@@ -110,6 +115,7 @@ void Emit::listControllers()
 Controller Emit::selectController()
 {
     listControllers();
+    fds = new pollfd();
     Controller control;
     int j = 0;
 
@@ -122,8 +128,10 @@ Controller Emit::selectController()
         std::cin >> j;
 
         // Start to create the actual controller device in here
-        control.fd = open(controlSelect[j].c_str(), O_RDONLY | O_NONBLOCK);
+        control.fd = open(controlSelect[j].c_str(), O_RDONLY);
         libevdev_new_from_fd(control.fd, &control.dev);
+
+        fds[0].fd = control.fd;
 
         control.driverVersion = libevdev_get_driver_version(control.dev);
         control.controllerName = libevdev_get_name(control.dev);
@@ -135,33 +143,50 @@ Controller Emit::selectController()
 void Emit::initalConfig()
 {
     controller = selectController();
+    int i = 0;
     // This is where the car crash happens kiddos
-    for (int i = 0; i < controlNames.size(); i++)
+    while (i < controlNames.size())
     {
         std::cout << "Configure: " << controlNames[(Buttons)i];
-        read(controller.fd, &controller.ev, sizeof(controller.ev));
 
-        switch (controller.ev.type)
+        controller.ev = controller.pollEvent();
+
+
+        if ((Buttons)i < Buttons::A)
         {
-            case EV_ABS:
-                input_absinfo absTemp;
-                // I want code then I poll for ABS Info
-                ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
-                if (absTemp.maximum > 0 && !controller.abs.contains(controller.ev.code))
-                {
-                    //controller.abs.try_emplace(controller.ev.code, absTemp);
-                }
-                controller.mappedControls.try_emplace((Buttons)i, controller.ev);
-                break;
-
-                case EV_KEY:
-                    controller.mappedControls.try_emplace((Buttons)i, controller.ev);
-                    break;
-
-            default:
-                controller.ev = controller.pollEvent();
-                break;
+            // Assume it's an ABS
+            if(controller.ev.type != EV_ABS)
+            {
+                continue;
             }
+            else
+            {
+                input_absinfo absTemp;
+                ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
+                std::cout << " Code: " << libevdev_event_code_get_name(controller.ev.type, controller.ev.code) << std::endl;
+
+                controller.abs.try_emplace(controller.ev.code, &absTemp);
+                controller.mappedControls.emplace((Buttons)i, controller.ev);
+                i += 1;
+            }
+        }
+        if ((Buttons)i >= Buttons::A)
+        {
+            // Assume it's ev key
+            if (controller.ev.type != EV_KEY)
+            {
+                continue;
+            }
+            else
+            {
+                // 0x100 would be a button that I care about
+                if (controller.ev.value >= BTN_0)
+                {
+                    controller.mappedControls.emplace((Buttons)i, controller.ev);
+                    i+= 1;
+                }
+            }
+        }
     }
 }
 

@@ -4,6 +4,7 @@
 #include <queue>
 #include <vector>
 #include <thread>
+#include <poll.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -90,102 +91,7 @@ struct Controller
         {R1, BTN_TR},
         {L1, BTN_TL},
     };
-    struct std::map<uint32_t, uinput_abs_setup*> abs
-    {
-        // LStick. X, Y
-        {
-            ABS_Y, 
-            new uinput_abs_setup
-            {
-                ABS_Y,
-                input_absinfo
-                {
-                    4095,
-                    0,
-                    65535,
-                    255,
-                    4095
-                }
-            }
-        },
-        {
-            ABS_X,
-            new uinput_abs_setup
-            {
-                ABS_X,
-                input_absinfo
-                {
-                    4095,
-                    0,
-                    65535,
-                    255,
-                    4095
-                }
-            }
-        },
-        // RStick X, Y
-        {
-            ABS_RY, 
-        new uinput_abs_setup
-        {
-            ABS_RY,
-                input_absinfo
-                {
-                    4095,
-                    0,
-                    65535,
-                    255,
-                    4095
-                }
-            }
-        },
-        {
-            ABS_RX, 
-            new uinput_abs_setup
-            {
-                ABS_RX,
-                input_absinfo
-                {
-                    4095,
-                    0,
-                    65535,
-                    255,
-                    4095
-                }
-            }
-        },
-        // RZ, Z
-        {
-            ABS_Z, 
-            new uinput_abs_setup
-            {
-                ABS_Z,
-                input_absinfo
-                {
-                    63,
-                    0,
-                    1023,
-                    255,
-                    63
-                },
-            }
-        },
-        {
-            ABS_RZ,
-            new uinput_abs_setup
-            {
-                ABS_RZ,
-                input_absinfo
-                {
-                    63,
-                    0,
-                    1023,
-                    255,
-                    63
-                },
-            }
-        }
-    };
+    struct std::map<uint32_t, input_absinfo*> abs;
 
     // All of this data is intended to create as convincing a device as possible
     std::string uniqueID;
@@ -215,8 +121,9 @@ class Emit
 
     libevdev_uinput* uidev;
     input_absinfo* init;
-
     Message* queue;
+
+    pollfd* fds;
 
     Controller controller;
     std::map<std::string, Buttons> commands
@@ -258,11 +165,11 @@ class Emit
     //friend void to_json(nlohmann::json& j, const Emit& p);
     //friend void from_json(const nlohmann::json& j, Emit& p);
 
-    bool CreateController(Message* queue, bool manualControl);
+    bool Close();
     bool emit(Buttons cmd);
-    int moveABS(uint32_t ABS, int moveAxis, int flat);
-    int resetABS(uint32_t ABS, int flatAxis);
     int pressBtn(uint32_t btn);
     int releaseBtn(uint32_t btn);
-    bool Close();
+    int resetABS(uint32_t ABS, int flatAxis);
+    int moveABS(uint32_t ABS, int moveAxis, int flat);
+    bool CreateController(Message* queue, bool manualControl);
 };
