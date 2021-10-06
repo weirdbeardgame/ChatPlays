@@ -108,8 +108,8 @@ struct Controller
     input_event pollEvent();
     std::map<Buttons, input_event> mappedControls;
 
-    //friend void to_json(nlohmann::json& j, const Controller& p);
-    //friend void from_json(const nlohmann::json& j, Controller& p);
+    friend void to_json(nlohmann::json& j, const Controller& p);
+    friend void from_json(const nlohmann::json& j, Controller& p);
 
 };
 

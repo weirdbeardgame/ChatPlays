@@ -50,17 +50,35 @@ input_event Controller::pollEvent()
     input_event event;
     err = read(fd, &event, sizeof(event));
 
-    //err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
-    if (err < 0)
+    // Means the struct was filled proper and we have an event
+    if (err == sizeof(event))
     {
-        if (err != EINVAL)
-        {
-            std::cout << " Failed read: " << err << "FD: " << fd << " "<< strerror(errno)  << std::endl;
-            return input_event();
-        }
+        return event;
     }
-    //printf("ev: 0x%02x", ev.code + ' \n');
-    return event;
+
+    // This works if there's a timer class
+    /*err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+
+    while (err != LIBEVDEV_READ_STATUS_SYNC)
+    {
+        if (err < 0)
+        {
+            if (err != -EAGAIN)
+            {
+                std::cout << " Failed read: " << err << "FD: " << fd << " "<< strerror(errno)  << std::endl;
+                return input_event();
+            }
+        }
+        if (err == LIBEVDEV_READ_STATUS_SYNC)
+        {
+            err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
+        }
+        else if (err == LIBEVDEV_READ_STATUS_SUCCESS)
+        {
+            std::cout << " ev: " << std::hex << ev.code << std::endl;
+            return event;
+        }
+    }*/
 }
 
 void Emit::listControllers()
@@ -127,11 +145,17 @@ Controller Emit::selectController()
         std::cout << "> ";
         std::cin >> j;
 
-        // Start to create the actual controller device in here
-        control.fd = open(controlSelect[j].c_str(), O_RDONLY);
-        libevdev_new_from_fd(control.fd, &control.dev);
+        control.eventPath = controlSelect[j];
 
-        fds[0].fd = control.fd;
+        // Start to create the actual controller device in here
+        control.fd = open(control.eventPath.c_str(), O_RDONLY);
+        int err = libevdev_new_from_fd(control.fd, &control.dev);
+
+        if (err < 0)
+        {
+            std::cerr << "Err Generating evdev device" << std::endl;
+            return Controller();
+        }
 
         control.driverVersion = libevdev_get_driver_version(control.dev);
         control.controllerName = libevdev_get_name(control.dev);
@@ -143,14 +167,12 @@ Controller Emit::selectController()
 void Emit::initalConfig()
 {
     controller = selectController();
-    int i = 0;
     // This is where the car crash happens kiddos
-    while (i < controlNames.size())
+    for (int i = 0; i < controlNames.size(); i++)
     {
         std::cout << "Configure: " << controlNames[(Buttons)i];
 
         controller.ev = controller.pollEvent();
-
 
         if ((Buttons)i < Buttons::A)
         {
@@ -167,7 +189,6 @@ void Emit::initalConfig()
 
                 controller.abs.try_emplace(controller.ev.code, &absTemp);
                 controller.mappedControls.emplace((Buttons)i, controller.ev);
-                i += 1;
             }
         }
         if ((Buttons)i >= Buttons::A)
@@ -175,7 +196,7 @@ void Emit::initalConfig()
             // Assume it's ev key
             if (controller.ev.type != EV_KEY)
             {
-                continue;
+                controller.ev = controller.pollEvent();
             }
             else
             {
@@ -183,7 +204,6 @@ void Emit::initalConfig()
                 if (controller.ev.value >= BTN_0)
                 {
                     controller.mappedControls.emplace((Buttons)i, controller.ev);
-                    i+= 1;
                 }
             }
         }
