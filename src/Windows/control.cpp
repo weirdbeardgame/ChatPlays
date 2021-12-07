@@ -15,8 +15,9 @@ Emit::Emit()
 
 }
 
-Emit::Emit(json j)
+Emit::Emit(json j, Message& q)
 {
+	queue = q;
 #ifdef __linux__
 	from_json(j, *this);
 #endif
@@ -83,7 +84,7 @@ void Emit::poll()
 	}
 }
 
-int Emit::CreateController(Message* q, bool manual)
+int Emit::CreateController(Message& q, bool manual)
 {
 	driver = vigem_alloc();
 	if (driver == nullptr)
@@ -121,7 +122,7 @@ int Emit::CreateController(Message* q, bool manual)
 		else
 		{
 			poll();
-			queue = *q;
+			queue = q;
 		}
 	}
 	return 0;

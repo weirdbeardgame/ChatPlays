@@ -49,7 +49,7 @@ void Message::enque(std::string mess)
 std::string Message::dequeue()
 {
 	std::unique_lock<std::mutex>(lock);
-	if (messageQueue.empty())
+	if (messageQueue.size() <= 0)
 	{
 		return std::string();
 	}

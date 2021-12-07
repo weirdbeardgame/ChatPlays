@@ -54,7 +54,7 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
     j[0]["channelName"].get_to(p.channelName);
 }
 
-void Twitch::create(Message* q, TwitchInfo* s)
+void Twitch::create(Message& q, TwitchInfo* s)
 {
     Twitch t;
     if (t.login(q, s))
@@ -63,7 +63,7 @@ void Twitch::create(Message* q, TwitchInfo* s)
     }
 }
 
-bool Twitch::login(Message* q, TwitchInfo* s)
+bool Twitch::login(Message& q, TwitchInfo* s)
 {
     settings = *s;
     if (connection.open(address.c_str(), "6667"))
@@ -73,34 +73,60 @@ bool Twitch::login(Message* q, TwitchInfo* s)
         if (connection.sendBytes(buf1.data(), buf1.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
-            return false;
+            isJoined = false;
         }
 
         std::string buf2 = ("NICK " + settings.userName + "\r\n");
         if (connection.sendBytes(buf2.c_str(), buf2.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
-            return false;
+            isJoined = false;
         }
-
-        std::cout << "Buffer: " << connection.recieve() << std::endl;
 
         if (!isJoined)
         {
-            std::string buf4 = ("JOIN #" + settings.channelName + "\r\n");
+            std::string buf3 = "CAP REQ :twitch.tv/commands\r\n";
+            if (connection.sendBytes(buf3.c_str(), buf3.size()) < 0)
+            {
+                std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                isJoined = false;
+            }
+            connection.recieve();
+
+            std::string buf4 = "CAP REQ :twitch.tv/membership\r\n";
             if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
             {
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
-
-            std::string buf5 = "CAP REQ :twitch.tv/membership";
+            connection.recieve();
+            std::string buf5 = "CAP REQ :twitch.tv/tags\r\n";
             if (connection.sendBytes(buf5.c_str(), buf5.size()) < 0)
             {
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
-            isJoined = true;
+            connection.recieve();
+
+            std::string buf6 = ("JOIN #" + settings.channelName + "\r\n");
+            if (connection.sendBytes(buf6.c_str(), buf6.size()) < 0)
+            {
+                std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                isJoined = false;
+            }
+
+            //connection.recieve();
+
+            if (std::string(connection.recieve()).find(".tmi.twitch.tv JOIN #" + settings.channelName) != std::string::npos)
+            {
+                std::cout << "Channel Joined" << std::endl;
+                isJoined = true;
+                connection.recieve();
+            }
+            else
+            {
+                isJoined = false;
+            }
         }
         return isJoined;
     }
@@ -111,13 +137,11 @@ bool Twitch::update()
 {
     while (connection.isConnected())
     {
-        if ((buffer += connection.recieve()).empty())
-        {
-            return false;
-        }
+        buffer += connection.recieve();
 
-        std::cout << "Update" << std::endl;
-        std::cout << buffer << std::endl;
+        // Something is causing this to end
+        //std::cout << "Update" << std::endl;
+        //std::cout << buffer << std::endl;
 
         std::string com = connection.parseCommand(buffer);
 
@@ -130,9 +154,10 @@ bool Twitch::update()
                 return false;
             }
         }
-        else if (buffer.find("PRIVMSG ") != std::string::npos)
+        if (buffer.find("PRIVMSG ") != std::string::npos)
         {
-            queue->enque(com);
+            std::cout << "Command Recieved" << std::endl;
+            queue.enque(com);
         }
 
         com.clear();

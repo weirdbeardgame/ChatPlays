@@ -7,7 +7,7 @@
 #include "message.h"
 #include "twitch.h"
 
-static Message* queue;
+static Message queue;
 static std::vector<std::thread*> threadPool;
 
 static TwitchInfo* twitchSettings;
@@ -15,6 +15,7 @@ static Emit* controller;
 
 void twitch()
 {
+    Twitch t{ queue };
     // Why can't the compiler resolve this function?
     std::thread th(&Twitch::create, queue, twitchSettings);
     th.join();
@@ -28,6 +29,7 @@ void manualControl()
 
 void startBot()
 {
+    Twitch t{ queue };
     threadPool.push_back(new std::thread(&Emit::CreateController, Emit(), queue, false));
     threadPool.push_back(new std::thread(&Twitch::create, queue, twitchSettings));
     threadPool[1]->join();
@@ -38,9 +40,8 @@ void startBot()
 int main()
 {
     twitchSettings = new TwitchInfo();
-    controller = new Emit();
+    controller = new Emit(queue);
     Settings* settings = new Settings(controller, twitchSettings);
-    queue = new Message();
     bool isActive = true;
     char command;
 
