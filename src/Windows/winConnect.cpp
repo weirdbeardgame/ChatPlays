@@ -91,7 +91,9 @@ bool Connect::isConnected()
 
 std::string Connect::parseCommand(std::string command)
 {
-    return strtok(command.data(), "!");
+    std::string buffer = command.substr(command.find_last_of(":") + 1);
+    buffer = buffer.erase(buffer.find("\r\n"));
+    return buffer;
 }
 
 void Connect::disconnect()

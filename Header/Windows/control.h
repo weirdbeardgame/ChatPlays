@@ -93,15 +93,15 @@ private:
     Buttons cmd;
     bool emitFail;
 
-    Message& queue = Message();
+    Message* queue;
 
 public:
     Emit();
-    Emit(Message& q)
+    Emit(Message* q)
     {
         queue = q;
     }
-    Emit(json j, Message& q);
+    Emit(json j, Message* q);
 
     void initalConfig();
     Buttons& GetCommands(std::string key);
@@ -114,7 +114,7 @@ public:
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
-    int CreateController(Message& q, bool manual);
+    int CreateController(Message* q, bool manual);
     void emit(Buttons cmd, bool manualControl);
     void poll();
     void moveABS(axisData& axis);

@@ -42,19 +42,19 @@ private:
     Connect connection;
     Emit controller;
 
-    Message& queue = Message();
+    Message* queue;
     TwitchInfo settings;
 
     bool isJoined = false;
 public:
     Twitch() = default;
-    Twitch(Message& q)
+    Twitch(Message* q)
     {
         queue = q;
     }
-    bool login(Message& q, TwitchInfo* s);
+    bool login(Message* q, TwitchInfo* s);
 
-    static void create(Message& q, TwitchInfo* s);
+    static void create(Message* q, TwitchInfo* s);
 
     // bool open(std::string address); for other service integration like discord?
     // recieve commands from chat and parse

@@ -15,7 +15,7 @@ Emit::Emit()
 
 }
 
-Emit::Emit(json j, Message& q)
+Emit::Emit(json j, Message* q)
 {
 	queue = q;
 #ifdef __linux__
@@ -65,7 +65,8 @@ void Emit::poll()
 	// Recieve commands from chat and press into emit
 	while (isActive)
 	{
-		std::string keyCode = queue.dequeue();
+		std::string keyCode = queue->dequeue();
+		// It never seems to get past this.
 		if (keyCode != std::string())
 		{
 			if (keyCode == "Exit")
@@ -84,9 +85,10 @@ void Emit::poll()
 	}
 }
 
-int Emit::CreateController(Message& q, bool manual)
+int Emit::CreateController(Message* q, bool manual)
 {
 	driver = vigem_alloc();
+	queue = q;
 	if (driver == nullptr)
 	{
 		std::cerr << "Oops! Driver no allocate! Unga Bunga. Me confused!" << std::endl;
@@ -122,7 +124,6 @@ int Emit::CreateController(Message& q, bool manual)
 		else
 		{
 			poll();
-			queue = q;
 		}
 	}
 	return 0;
@@ -151,6 +152,7 @@ void Emit::emit(Buttons cmd, bool manualControl)
 			}
 			cmd = GetCommands(keyCode);
 		}
+
 		axisData axis;
 		switch (cmd)
 		{

@@ -54,7 +54,7 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
     j[0]["channelName"].get_to(p.channelName);
 }
 
-void Twitch::create(Message& q, TwitchInfo* s)
+void Twitch::create(Message* q, TwitchInfo* s)
 {
     Twitch t;
     if (t.login(q, s))
@@ -63,7 +63,7 @@ void Twitch::create(Message& q, TwitchInfo* s)
     }
 }
 
-bool Twitch::login(Message& q, TwitchInfo* s)
+bool Twitch::login(Message* q, TwitchInfo* s)
 {
     settings = *s;
     if (connection.open(address.c_str(), "6667"))
@@ -156,8 +156,7 @@ bool Twitch::update()
         }
         if (buffer.find("PRIVMSG ") != std::string::npos)
         {
-            std::cout << "Command Recieved" << std::endl;
-            queue.enque(com);
+            queue->enque(com);
         }
 
         com.clear();
