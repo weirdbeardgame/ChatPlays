@@ -168,47 +168,35 @@ void Emit::initalConfig()
     pollfd fds[10];
     listControllers(fds);
     controller = selectController();
+    bool isMapped = false;
     // This is where the car crash happens kiddos
     for (int i = 0; i < controlNames.size(); i++)
     {
-        std::cout << "Configure: " << controlNames[(Buttons)i];
-
-        controller.ev = controller.pollEvent(fds);
-
-        // This checks if were mapping to UP DOWN LEFT RIGHT etc.
-        if ((Buttons)i < Buttons::A)
+        std::cout << " Configure: " << controlNames[(Buttons)i];
+        while(!isMapped)
         {
-            // Assume it's an ABS
-            if(controller.ev.type != EV_ABS)
-            {
-                continue;
-            }
-            else
+            controller.ev = controller.pollEvent(fds);
+
+            // This checks if were mapping to UP DOWN LEFT RIGHT etc.
+            if ((Buttons)i < Buttons::A && controller.ev.type == EV_ABS)
             {
                 input_absinfo absTemp;
                 ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
+
                 std::cout << " Code: " << libevdev_event_code_get_name(controller.ev.type, controller.ev.code) << std::endl;
 
                 controller.abs.try_emplace(controller.ev.code, &absTemp);
                 controller.mappedControls.emplace((Buttons)i, controller.ev);
+                isMapped = true;
+            }
+            if ((Buttons)i >= Buttons::A && controller.ev.type == EV_KEY)
+            {
+                std::cout << " Code: " << libevdev_event_code_get_name(controller.ev.type, controller.ev.code) << std::endl;
+                controller.mappedControls.emplace((Buttons)i, controller.ev);
+                isMapped = true;
             }
         }
-        if ((Buttons)i >= Buttons::A)
-        {
-            // Assume it's ev key
-            if (controller.ev.type != EV_KEY)
-            {
-                controller.ev = controller.pollEvent(fds);
-            }
-            else
-            {
-                // 0x100 would be a button that I care about
-                if (controller.ev.value >= BTN_0)
-                {
-                    controller.mappedControls.emplace((Buttons)i, controller.ev);
-                }
-            }
-        }
+        isMapped = false;
     }
 }
 
