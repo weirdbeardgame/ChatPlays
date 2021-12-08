@@ -53,7 +53,7 @@ void Settings::edit()
             twitchSettings->Save(j, true);
             break;
         case 'C':
-            if (controllerSettings)
+            if (controllerSettings == nullptr)
             {
                 controllerSettings = new Emit();
             }
@@ -74,7 +74,7 @@ bool Settings::load()
         fileStream.open(filePath, std::ios::in);
         j = j.parse(fileStream);
         twitchSettings->Load(j); //Psudo load function?
-        //controllerSettings = Emit(j);
+        controllerSettings = new Emit(j);
     }
     else
     {
@@ -91,6 +91,9 @@ bool Settings::save()
     }
     else if (!fs::exists(filePath))
     {
+        twitchSettings = new TwitchInfo();
+        controllerSettings = new Emit();
+
         twitchSettings->Save(j, true);
         controllerSettings->initalConfig();
         controllerSettings->save(j, true);

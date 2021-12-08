@@ -44,54 +44,34 @@ void Emit::save(json &j, bool isDefault)
     }
 }
 
-input_event Controller::pollEvent()
+input_event Controller::pollEvent(pollfd* fds)
 {
     int err = 0;
     input_event event;
-    err = read(fd, &event, sizeof(event));
-
-    // Means the struct was filled proper and we have an event
-    if (err == sizeof(event))
+    bool isReady = poll(fds, sizeof(fds), timer.tv_sec);
+    if (isReady)
     {
-        return event;
-    }
-
-    // This works if there's a timer class
-    /*err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
-
-    while (err != LIBEVDEV_READ_STATUS_SYNC)
-    {
-        if (err < 0)
+        err = read(fd, &event, sizeof(event));
+        // Means the struct was filled proper and we have an event
+        if (err == sizeof(event))
         {
-            if (err != -EAGAIN)
-            {
-                std::cout << " Failed read: " << err << "FD: " << fd << " "<< strerror(errno)  << std::endl;
-                return input_event();
-            }
-        }
-        if (err == LIBEVDEV_READ_STATUS_SYNC)
-        {
-            err = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC, &ev);
-        }
-        else if (err == LIBEVDEV_READ_STATUS_SUCCESS)
-        {
-            std::cout << " ev: " << std::hex << ev.code << std::endl;
             return event;
         }
-    }*/
+    }
 }
 
-void Emit::listControllers()
+void Emit::listControllers(pollfd* fds)
 {
+    int i = 0;
+    int file = 0;
+    libevdev* dev;
+
+    controlSelect.resize(30);
+
     // List devices and select one to save.
-    for (auto &entry: fs::directory_iterator("/dev/input"))
+    for (auto const &entry: fs::directory_iterator("/dev/input"))
     {
         std::string temp = entry.path().filename();
-
-        int i = 0;
-        int file = 0;
-
-        libevdev* dev;
 
         if (temp.compare(0, 5, "event") == 0)
         {
@@ -119,9 +99,10 @@ void Emit::listControllers()
             if (libevdev_has_event_type(dev, EV_KEY) && libevdev_has_event_type(dev, EV_ABS))
             {
                 std::cout << i << " Dev: " << libevdev_get_name(dev) << std::endl;
+                //fds[i].fd = file;
                 // Since it's being closed anyways. Just tell it to fuck off ourselves. We can reopen in the lower config sections
-                close(file);
-                libevdev_free(dev);
+                //close(file);
+                //libevdev_free(dev);
                 controlSelect.push_back(entry.path());
             }
         }
@@ -132,16 +113,14 @@ void Emit::listControllers()
 
 Controller Emit::selectController()
 {
-    listControllers();
-    fds = new pollfd();
     Controller control;
+    //control.fds = new pollfd[controlSelect.size()]();
     int j = 0;
 
     if (controlSelect.size() > 0)
     {
         // We check negative to make sure j only gets entered into once
         // And because index 0 would be a valid index
-
         std::cout << "> ";
         std::cin >> j;
 
@@ -166,14 +145,17 @@ Controller Emit::selectController()
 
 void Emit::initalConfig()
 {
+    pollfd fds[10];
+    listControllers(fds);
     controller = selectController();
     // This is where the car crash happens kiddos
     for (int i = 0; i < controlNames.size(); i++)
     {
         std::cout << "Configure: " << controlNames[(Buttons)i];
 
-        controller.ev = controller.pollEvent();
+        controller.ev = controller.pollEvent(fds);
 
+        // This checks if were mapping to UP DOWN LEFT RIGHT etc.
         if ((Buttons)i < Buttons::A)
         {
             // Assume it's an ABS
@@ -196,7 +178,7 @@ void Emit::initalConfig()
             // Assume it's ev key
             if (controller.ev.type != EV_KEY)
             {
-                controller.ev = controller.pollEvent();
+                controller.ev = controller.pollEvent(fds);
             }
             else
             {
@@ -210,13 +192,13 @@ void Emit::initalConfig()
     }
 }
 
-bool Emit::CreateController(Message* q, bool manualControl)
+bool Emit::CreateController(Message* q)
 {
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0)
     {
         printf ("Open Error! \n");
-        return false;
+        isActive = false;
     }
     else
     {
@@ -251,10 +233,35 @@ bool Emit::CreateController(Message* q, bool manualControl)
         if (ioctl(fd, UI_DEV_CREATE) < 0)
         {
             std::cout << "ERR Bad FD: " << fd << " : " << strerror(errno) << std::endl;
-            return false;
+            isActive = false;
         }
         sleep(1);
-        return true;
+        isActive = true;
+    }
+    return isActive;
+}
+
+void Emit::poll(Message* q, bool manual)
+{
+    if (!isActive)
+    {
+        CreateController(q);
+    }
+
+    while(isActive)
+    {
+        if (manual)
+        {
+            std::string cmd = std::string();
+            std::cout << "Please Enter a command: ";
+            std::cin >> cmd;
+            emit(q, GetCommands(cmd));
+        }
+        else if (!manual)
+        {
+            std::string cmd = q->dequeue();
+            emit(q, GetCommands(cmd));
+        }
     }
 }
 
@@ -359,7 +366,7 @@ Buttons Emit::GetCommands(std::string key)
     }
 }
 
-bool Emit::emit(Buttons keyCode)
+bool Emit::emit(Message* q, Buttons keyCode)
 {
     int emitCode = 0;
     switch(keyCode)

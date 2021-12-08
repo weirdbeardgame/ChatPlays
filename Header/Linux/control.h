@@ -11,6 +11,7 @@
 #include <string.h>
 #include <iostream>
 #include <filesystem>
+
 #include <linux/uinput.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
@@ -105,7 +106,9 @@ struct Controller
     input_event ev;
     libevdev *dev;
 
-    input_event pollEvent();
+    timeval timer;
+
+    input_event pollEvent(pollfd* fds);
     std::map<Buttons, input_event> mappedControls;
 
     friend void to_json(nlohmann::json& j, const Controller& p);
@@ -118,6 +121,8 @@ class Emit
     private:
     int fd = 0;
     int maxInput = 0;
+
+    bool isActive;
 
     libevdev_uinput* uidev;
     input_absinfo* init;
@@ -156,7 +161,7 @@ class Emit
 
     void initalConfig();
     Controller selectController();
-    void listControllers();
+    void listControllers(pollfd* fds);
 
     Buttons GetCommands(std::string key);
 
@@ -166,10 +171,11 @@ class Emit
     //friend void from_json(const nlohmann::json& j, Emit& p);
 
     bool Close();
-    bool emit(Buttons cmd);
+    bool emit(Message* q, Buttons cmd);
+    void poll(Message* q, bool manual);
     int pressBtn(uint32_t btn);
     int releaseBtn(uint32_t btn);
     int resetABS(uint32_t ABS, int flatAxis);
     int moveABS(uint32_t ABS, int moveAxis, int flat);
-    bool CreateController(Message* queue, bool manualControl);
+    bool CreateController(Message* queue);
 };
