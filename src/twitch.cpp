@@ -139,10 +139,6 @@ bool Twitch::update()
     {
         buffer += connection.recieve();
 
-        // Something is causing this to end
-        //std::cout << "Update" << std::endl;
-        //std::cout << buffer << std::endl;
-
         std::string com = connection.parseCommand(buffer);
 
         if (buffer.find("PING :tmi.twitch.tv") != std::string::npos)

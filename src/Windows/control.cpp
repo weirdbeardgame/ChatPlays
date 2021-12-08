@@ -12,7 +12,6 @@ Emit::Emit()
 		{"commands", commands},
 		//{"controller", controller},
 	};
-
 }
 
 Emit::Emit(json j, Message* q)
@@ -60,32 +59,48 @@ VOID CALLBACK notification(
 	std::cout << (int)SmallMotor << std::endl;*/
 }
 
-void Emit::poll()
+// Thread needs to switch to this function. Whoops!
+
+void Emit::poll(Message* q, bool manualControl)
 {
+	std::string keyCode;
+	if (!isActive)
+	{
+		CreateController(q);
+	}
 	// Recieve commands from chat and press into emit
 	while (isActive)
 	{
-		std::string keyCode = queue->dequeue();
-		// It never seems to get past this.
-		if (keyCode != std::string())
+		if (manualControl)
 		{
+			// I need a better way to poll this.
+			std::cout << "Enter a keycode: ";
+			std::cin >> keyCode;
+
 			if (keyCode == "Exit")
 			{
 				isActive = false;
 			}
-			else
+			cmd = GetCommands(keyCode);
+			emit(q, cmd);
+		}
+		else if (manualControl == false)
+		{
+			std::string keyCode = queue->dequeue();
+			// It never seems to get past this.
+			if (keyCode != std::string())
 			{
 				cmd = GetCommands(keyCode);
 				if (cmd != Buttons::CLEAR)
 				{
-					emit(cmd, false);
+					emit(q, cmd);
 				}
 			}
 		}
 	}
 }
 
-int Emit::CreateController(Message* q, bool manual)
+int Emit::CreateController(Message* q)
 {
 	driver = vigem_alloc();
 	queue = q;
@@ -116,71 +131,47 @@ int Emit::CreateController(Message* q, bool manual)
 		}
 		vigem_target_x360_register_notification(driver, xbox, notification, nullptr);
 		isActive = true;
-		
-		if (manual)
-		{
-			emit(Buttons::CLEAR, true);
-		}
-		else
-		{
-			poll();
-		}
 	}
 	return 0;
 }
 // Reset will kill input! Input is never sent before reset is called
 // This needs to be a loop
-void Emit::emit(Buttons cmd, bool manualControl)
+void Emit::emit(Message* q, Buttons cmd)
 {
-	std::string keyCode;
-	while (isActive)
+	report = new XUSB_REPORT();
+	Sleep(500);
+	resetABS();
+	releaseBtn(cmd);
+	vigem_target_x360_update(driver, xbox, *report);
+
+	axisData axis;
+	switch (cmd)
 	{
-		report = new XUSB_REPORT();
-		Sleep(500);
-		resetABS();
-		releaseBtn(cmd);
-		vigem_target_x360_update(driver, xbox, *report);
-		if (manualControl)
-		{
-			// I need a better way to poll this.
-			std::cout << "Enter a keycode: ";
-			std::cin >> keyCode;
-
-			if (keyCode == "Exit")
-			{
-				isActive = false;
-			}
-			cmd = GetCommands(keyCode);
-		}
-
-		axisData axis;
-		switch (cmd)
-		{
-		case Buttons::UP:
-			// Set to max values of Xinput
-			axis.set(0, 32767, 0, 0);
-			break;
-		case Buttons::DOWN:
-			axis.set(0, -32768, 0, 0);
-			break;
-		case Buttons::RIGHT:
-			axis.set(32767, 0, 0, 0);
-			break;
-		case Buttons::LEFT:
-			axis.set(-32768, 0, 0, 0);
-			break;
-		}
-
-		if (cmd > Buttons::RIGHT)
-		{
-			pressBtn(cmd);
-		}
-		else
-		{
-			moveABS(axis);
-		}
-		vigem_target_x360_update(driver, xbox, *report);
+	case Buttons::UP:
+		// Set to max values of Xinput
+		axis.set(0, 32767, 0, 0);
+		break;
+	case Buttons::DOWN:
+		axis.set(0, -32768, 0, 0);
+		break;
+	case Buttons::RIGHT:
+		axis.set(32767, 0, 0, 0);
+		break;
+	case Buttons::LEFT:
+		axis.set(-32768, 0, 0, 0);
+		break;
 	}
+
+	if (cmd > Buttons::RIGHT)
+	{
+		pressBtn(cmd);
+	}
+	else
+	{
+		moveABS(axis);
+	}
+	vigem_target_x360_update(driver, xbox, *report);
+	cmd = Buttons::CLEAR;
 }
 
 void Emit::pressBtn(Buttons& btn)

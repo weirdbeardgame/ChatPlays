@@ -84,7 +84,6 @@ public:
 class Emit
 {
 private:
-    int dStat;
     // I need Xinput
     PXUSB_REPORT report;
     PVIGEM_CLIENT driver;
@@ -107,16 +106,16 @@ public:
     Buttons& GetCommands(std::string key);
 
     // All the action is in here m8
-    bool isActive;
+    bool isActive = false;
 
     json control;
     void save(json& j, bool isDefault = false);
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
-    int CreateController(Message* q, bool manual);
-    void emit(Buttons cmd, bool manualControl);
-    void poll();
+    int CreateController(Message* q);
+    void emit(Message* q, Buttons cmd);
+    void poll(Message* q, bool manual);
     void moveABS(axisData& axis);
     void resetABS();
     void pressBtn(Buttons& btn);

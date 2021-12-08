@@ -109,6 +109,7 @@
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\final\source\repos\ChatPlays\3rdparty\windows\ViGEmClient\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalDependencies>ws2_32.lib;setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>

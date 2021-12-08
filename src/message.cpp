@@ -48,12 +48,13 @@ void Message::enque(std::string mess)
 
 std::string Message::dequeue()
 {
-	std::unique_lock<std::mutex>(lock);
 	if (messageQueue.size() <= 0)
 	{
 		return std::string();
 	}
+	std::unique_lock<std::mutex>(lock);
 	std::string mess = messageQueue.front();
 	messageQueue.pop();
+	condition.notify_one();
 	return mess;
 }

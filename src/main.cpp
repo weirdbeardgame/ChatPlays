@@ -21,15 +21,15 @@ void twitch()
 
 void manualControl()
 {
-    std::thread th(&Emit::CreateController, Emit(), queue, true);
+    std::thread th(&Emit::poll, Emit(), queue, true);
     th.join();
 }
 
 void startBot()
 {
-    threadPool.push_back(new std::thread(&Emit::CreateController, Emit(), queue, false));
     threadPool.push_back(new std::thread(&Twitch::create, queue, twitchSettings));
-    threadPool[1]->join();
+    threadPool.push_back(new std::thread(&Emit::poll, Emit(), queue, false));
+    threadPool[0]->join();
 }
 
 int main()
