@@ -65,9 +65,6 @@ void Emit::listControllers(pollfd* fds)
     int i = 0;
     int file = 0;
     libevdev* dev;
-
-    controlSelect.resize(30);
-
     // List devices and select one to save.
     for (auto const &entry: fs::directory_iterator("/dev/input"))
     {
@@ -98,11 +95,10 @@ void Emit::listControllers(pollfd* fds)
 
             if (libevdev_has_event_type(dev, EV_KEY) && libevdev_has_event_type(dev, EV_ABS))
             {
-                std::cout << i << " Dev: " << libevdev_get_name(dev) << std::endl;
-                //fds[i].fd = file;
+                fds[i].fd = file;
                 // Since it's being closed anyways. Just tell it to fuck off ourselves. We can reopen in the lower config sections
-                //close(file);
-                //libevdev_free(dev);
+                close(file);
+                libevdev_free(dev);
                 controlSelect.push_back(entry.path());
             }
         }
@@ -110,12 +106,32 @@ void Emit::listControllers(pollfd* fds)
     }
 }
 
+void Emit::PrintControllers()
+{
+    libevdev *dev;
+    int i = 0;
+    for(auto &path: controlSelect)
+    {
+        int fdTemp = open(path.string().c_str(), O_RDONLY);
+        if (fdTemp >= 0)
+        {
+            int err = libevdev_new_from_fd(fdTemp, &dev);
+            std::cout << i << ": " << libevdev_get_name(dev) << std::endl;
+            close(fdTemp);
+            libevdev_free(dev);
+            i += 1;
+        }
+    }
+}
+
+
 
 Controller Emit::selectController()
 {
     Controller control;
     //control.fds = new pollfd[controlSelect.size()]();
     int j = 0;
+    PrintControllers();
 
     if (controlSelect.size() > 0)
     {
@@ -128,6 +144,10 @@ Controller Emit::selectController()
 
         // Start to create the actual controller device in here
         control.fd = open(control.eventPath.c_str(), O_RDONLY);
+        if (control.fd < 0)
+        {
+            std::cerr << "Err: " << control.fd << std::endl;
+        }
         int err = libevdev_new_from_fd(control.fd, &control.dev);
 
         if (err < 0)

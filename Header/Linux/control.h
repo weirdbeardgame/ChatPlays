@@ -163,6 +163,8 @@ class Emit
     Controller selectController();
     void listControllers(pollfd* fds);
 
+    void PrintControllers();
+
     Buttons GetCommands(std::string key);
 
     json control;

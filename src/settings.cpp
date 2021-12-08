@@ -95,8 +95,10 @@ bool Settings::save()
         controllerSettings = new Emit();
 
         twitchSettings->Save(j, true);
+
         controllerSettings->initalConfig();
         controllerSettings->save(j, true);
+
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
         return fileStream.fail();
@@ -105,8 +107,10 @@ bool Settings::save()
     {
         twitchSettings->Save(j);
         controllerSettings->save(j);
+
         fileStream.open(filePath, std::ios::out);
         fileStream << std::setw(4) << j << std::endl;
+
         return fileStream.fail();
     }
 }
