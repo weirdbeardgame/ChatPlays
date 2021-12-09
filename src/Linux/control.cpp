@@ -28,7 +28,7 @@ Controller::Controller(const Controller& c)
 
 Emit::Emit(json j)
 {
-    //from_json(j, *this);
+    from_json(j, *this);
 }
 
 void Emit::save(json &j, bool isDefault)
@@ -40,7 +40,8 @@ void Emit::save(json &j, bool isDefault)
     }
     else
     {
-        j.push_back(control);
+        control = *this;
+        j += control;
     }
 }
 
@@ -48,7 +49,9 @@ input_event Controller::pollEvent(pollfd* fds)
 {
     int err = 0;
     input_event event;
+
     bool isReady = poll(fds, sizeof(fds), timer.tv_sec);
+
     if (isReady)
     {
         err = read(fd, &event, sizeof(event));
@@ -64,7 +67,9 @@ void Emit::listControllers(pollfd* fds)
 {
     int i = 0;
     int file = 0;
+
     libevdev* dev;
+
     // List devices and select one to save.
     for (auto const &entry: fs::directory_iterator("/dev/input"))
     {
@@ -108,8 +113,8 @@ void Emit::listControllers(pollfd* fds)
 
 void Emit::PrintControllers()
 {
-    libevdev *dev;
     int i = 0;
+    libevdev *dev;
     for(auto &path: controlSelect)
     {
         int fdTemp = open(path.string().c_str(), O_RDONLY);
@@ -124,13 +129,11 @@ void Emit::PrintControllers()
     }
 }
 
-
-
 Controller Emit::selectController()
 {
-    Controller control;
-    //control.fds = new pollfd[controlSelect.size()]();
     int j = 0;
+    Controller control;
+
     PrintControllers();
 
     if (controlSelect.size() > 0)
@@ -144,10 +147,12 @@ Controller Emit::selectController()
 
         // Start to create the actual controller device in here
         control.fd = open(control.eventPath.c_str(), O_RDONLY);
+
         if (control.fd < 0)
         {
             std::cerr << "Err: " << control.fd << std::endl;
         }
+
         int err = libevdev_new_from_fd(control.fd, &control.dev);
 
         if (err < 0)
@@ -184,8 +189,7 @@ void Emit::initalConfig()
                 ioctl(controller.fd, EVIOCGABS(controller.ev.code), absTemp);
 
                 std::cout << " Code: " << libevdev_event_code_get_name(controller.ev.type, controller.ev.code) << std::endl;
-
-                controller.abs.try_emplace(controller.ev.code, &absTemp);
+                controller.abs.try_emplace(controller.ev.code, absTemp);
                 controller.mappedControls.emplace((Buttons)i, controller.ev);
                 isMapped = true;
             }
@@ -300,24 +304,30 @@ int Emit::pressBtn(uint32_t button)
 int Emit::releaseBtn(uint32_t button)
 {
     int emitCode = 0;
+
     emitCode = libevdev_uinput_write_event(uidev, EV_KEY, button, 0);
+
     if (emitCode < 0)
     {
         std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
         return -1;
     }
+
     emitCode = libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+
     if (emitCode < 0)
     {
         std::cerr << "PRESS ERROR: " << strerror(errno) << std::endl;
         return -1;
     }
+
     return emitCode;
 }
 
 int Emit::moveABS(uint32_t ABS, int moveAxis, int flat)
 {
     int emitCode = 0;
+
     emitCode = libevdev_uinput_write_event(uidev, EV_ABS, ABS, moveAxis);
 
     if (emitCode < 0)
@@ -386,17 +396,14 @@ bool Emit::emit(Message* q, Buttons keyCode)
         // Dpad Down
         emitCode = moveABS(controller.buttonCodes[keyCode], controller.mappedControls[keyCode].value, 4095);
         break;
-
     case Buttons::LEFT:
         // Dpad Left
         emitCode = moveABS(controller.buttonCodes[keyCode], controller.mappedControls[keyCode].value, 4095);
         break;
-
     case Buttons::RIGHT:
         // Dpad Right
         emitCode = moveABS(controller.buttonCodes[keyCode], controller.mappedControls[keyCode].value, 4095);
         break;
-
     case Buttons::EXIT: 
         emitCode = Close();
         return emitCode;
@@ -411,4 +418,50 @@ bool Emit::Close()
     libevdev_uinput_destroy(uidev);
     libevdev_free(controller.dev);
     return 0;
+}
+
+void to_json(nlohmann::json& j, const input_absinfo& abs)
+{
+    j["flat"] = abs.flat;
+    j["fuzz"] = abs.fuzz;
+    j["value"] = abs.value;
+    j["minimum"] = abs.minimum;
+    j["maximum"] = abs.maximum;
+    j["resolution"] = abs.resolution;
+}
+
+void from_json(const nlohmann::json& j, input_absinfo& abs)
+{
+    j["flat"].get_to(abs.flat);
+    j["fuzz"].get_to(abs.fuzz);
+    j["value"].get_to(abs.value);
+    j["minimum"].get_to(abs.minimum);
+    j["maximum"].get_to(abs.maximum);
+    j["resolution"].get_to(abs.resolution);
+}
+
+void to_json(nlohmann::json& j, const Controller& c)
+{
+    j[1]["abs"] = c.abs;
+    j[1]["buttonCodes"] = c.buttonCodes;
+    j[1]["controllerName"] = c.controllerName;
+
+}
+
+void from_json(const nlohmann::json& j, Controller& c)
+{
+    j[1]["abs"].get_to(c.abs);
+    j[1]["buttonCodes"].get_to(c.buttonCodes);
+}
+
+void to_json(nlohmann::json& j, const Emit& p)
+{
+    j[1]["commands"] = p.commands;
+    j[1]["controller"] = p.controller;
+}
+
+void from_json(const nlohmann::json& j, Emit& p)
+{
+    j[1]["commands"].get_to(p.commands);
+    j[1]["controller"].get_to(p.controller);
 }

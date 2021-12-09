@@ -67,32 +67,8 @@ struct Controller
     Controller(const Controller& c);
 
     // Consider all of the below a default mapping
-    std::map<Buttons, uint32_t>buttonCodes = 
-    {
-        {LEFT, ABS_X},
-        {RIGHT, ABS_X},
-        {UP, ABS_Y},
-        {DOWN, ABS_Y},
-        {RLEFT, ABS_RX},
-        {RRIGHT, ABS_RX},
-        {RUP, ABS_RY},
-        {RDOWN, ABS_RY},
-        {R2, ABS_RZ},
-        {L2, ABS_Z},
-        {DLEFT, ABS_HAT0X},
-        {DRIGHT, ABS_HAT0X},
-        {DUP, ABS_HAT0Y},
-        {DDOWN, ABS_HAT0Y},
-        {A, BTN_SOUTH},
-        {B, BTN_EAST},
-        {START, BTN_START},
-        {SELECT, BTN_SELECT},
-        {Y, BTN_NORTH},
-        {X, BTN_WEST},
-        {R1, BTN_TR},
-        {L1, BTN_TL},
-    };
-    struct std::map<uint32_t, input_absinfo*> abs;
+    std::map<Buttons, uint32_t>buttonCodes;
+    struct std::map<uint32_t, input_absinfo> abs;
 
     // All of this data is intended to create as convincing a device as possible
     std::string uniqueID;
@@ -169,8 +145,13 @@ class Emit
 
     json control;
     void save(json &j, bool isDefault = false);
-    //friend void to_json(nlohmann::json& j, const Emit& p);
-    //friend void from_json(const nlohmann::json& j, Emit& p);
+
+    friend void to_json(nlohmann::json& j, const Emit& p);
+    friend void from_json(const nlohmann::json& j, Emit& p);
+
+    friend void to_json(nlohmann::json& j, const input_absinfo& p);
+    friend void from_json(const nlohmann::json& j, input_absinfo& p);
+
 
     bool Close();
     bool emit(Message* q, Buttons cmd);
