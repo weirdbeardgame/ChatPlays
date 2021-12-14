@@ -118,6 +118,7 @@
   <ItemGroup>
     <ClCompile Include="src\message.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\PineClient.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\twitch.cpp" />
     <ClCompile Include="src\Windows\control.cpp" />
@@ -126,6 +127,7 @@
   <ItemGroup>
     <ClInclude Include="3rdparty\json.hpp" />
     <ClInclude Include="Header\pine.h" />
+    <ClInclude Include="Header\PineClient.h" />
     <ClInclude Include="header\settings.h" />
     <ClInclude Include="header\twitch.h" />
     <ClInclude Include="Header\Windows\control.h" />
