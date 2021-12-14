@@ -37,6 +37,20 @@ void Emit::save(json& j, bool isDefault)
 
 void Emit::initalConfig()
 {
+	std::string toEnter;
+	std::cout << "Please Enter commands for chat: " << std::endl;
+	for (auto const &command : commands)
+	{
+		std::cout << command.first << ": ";
+		std::cin >> toEnter;
+
+		Buttons Temp = command.second;
+
+		commands.extract(command.first);
+		commands.emplace(toEnter, Temp);
+
+		toEnter.clear();
+	}
 }
 
 VOID CALLBACK notification(
