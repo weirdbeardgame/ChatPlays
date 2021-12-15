@@ -93,14 +93,16 @@ static std::map<std::string, Buttons> defaultCommands
 struct axisData
 {
 private:
-    short axis[4];
+    short axis[6];
 public:
-    void set(short x, short y, short rx, short ry)
+    void set(short x, short y, short rx, short ry, short r2, short l2)
     {
         axis[0] = x;
         axis[1] = y;
         axis[2] = rx;
         axis[3] = ry;
+        axis[4] = r2;
+        axis[5] = l2;
     }
 
     short get(int i)

@@ -109,6 +109,12 @@ void Emit::poll(Message* q, Emit settings, bool manualControl)
 			}
 			cmd = GetCommands(keyCode);
 			emit(q, cmd);
+			report = new XUSB_REPORT();
+			Sleep(500);
+			resetABS();
+			releaseBtn(cmd);
+			vigem_target_x360_update(driver, xbox, *report);
+
 		}
 		else if (manualControl == false)
 		{
@@ -120,6 +126,11 @@ void Emit::poll(Message* q, Emit settings, bool manualControl)
 				if (cmd != Buttons::CLEAR)
 				{
 					emit(q, cmd);
+					report = new XUSB_REPORT();
+					Sleep(500);
+					resetABS();
+					releaseBtn(cmd);
+					vigem_target_x360_update(driver, xbox, *report);
 				}
 			}
 		}
@@ -166,30 +177,32 @@ int Emit::CreateController(Message* q, Emit settings)
 void Emit::emit(Message* q, Buttons cmd)
 {
 	report = new XUSB_REPORT();
-	Sleep(500);
-	resetABS();
-	releaseBtn(cmd);
-	vigem_target_x360_update(driver, xbox, *report);
-
 	axisData axis;
 	switch (cmd)
 	{
 	case Buttons::UP:
 		// Set to max values of Xinput
-		axis.set(0, 32767, 0, 0);
+		axis.set(0, 32767, 0, 0, 0, 0);
 		break;
 	case Buttons::DOWN:
-		axis.set(0, -32768, 0, 0);
+		axis.set(0, -32768, 0, 0, 0, 0);
 		break;
 	case Buttons::RIGHT:
-		axis.set(32767, 0, 0, 0);
+		axis.set(32767, 0, 0, 0, 0, 0);
 		break;
 	case Buttons::LEFT:
-		axis.set(-32768, 0, 0, 0);
+		axis.set(-32768, 0, 0, 0, 0, 0);
+		break;
+	case Buttons::R2:
+		axis.set(0, 0, 0, 0, 30, 0);
+		break;
+
+	case Buttons::L2:
+		axis.set(0, 0, 0, 0, 0, 30);
 		break;
 	}
 
-	if (cmd > Buttons::RIGHT)
+	if (cmd > Buttons::R2)
 	{
 		pressBtn(cmd);
 	}
@@ -221,6 +234,8 @@ void Emit::moveABS(axisData& axis)
 	report->sThumbLY = axis.get(1);
 	report->sThumbRX = axis.get(2);
 	report->sThumbRY = axis.get(3);
+	report->bRightTrigger = axis.get(4);
+	report->bLeftTrigger = axis.get(5);
 }
 
 void Emit::resetABS()
@@ -229,6 +244,8 @@ void Emit::resetABS()
 	report->sThumbLY = 0;
 	report->sThumbRX = 0;
 	report->sThumbRY = 0;
+	report->bRightTrigger = 0;
+	report->bLeftTrigger = 0;
 }
 
 Buttons& Emit::GetCommands(std::string key)
