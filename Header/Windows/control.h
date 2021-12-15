@@ -13,6 +13,7 @@
 
 #pragma comment(lib, "setupapi.lib")
 
+// Note that "EXIT" Stands for the bot exit command
 enum Buttons { UP, DOWN, LEFT, RIGHT, DUP, DDOWN, DLEFT, DRIGHT, L2, R2, A, B, X, Y, START, SELECT, L1, R1, L3, R3, EXIT, CLEAR };
 
 using json = nlohmann::json;
@@ -37,7 +38,34 @@ static std::map<Buttons, uint16_t> buttonPos =
     {DRIGHT, XUSB_GAMEPAD_DPAD_RIGHT}
 };
 
-static std::map<std::string, Buttons> commands
+// What I need is a default settings
+// Note that this array will dictate the order of the map as well
+const std::array<std::string, 21> commandEnumList =
+{
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT",
+    "A",
+    "B",
+    "X",
+    "Y",
+    "START",
+    "SELECT",
+    "L1",
+    "R1",
+    "L2",
+    "R2",
+    "L3",
+    "R3",
+    "Exit",
+    "DUP",
+    "DDOWN",
+    "DLEFT",
+    "DRIGHT"
+};
+
+static std::map<std::string, Buttons> defaultCommands
 {
     {"UP", UP},
     {"DOWN", DOWN},
@@ -61,6 +89,8 @@ static std::map<std::string, Buttons> commands
     {"DLEFT", DLEFT},
     {"DRIGHT", DRIGHT}
 };
+
+static std::map<std::string, Buttons> commands;
 
 struct axisData
 {

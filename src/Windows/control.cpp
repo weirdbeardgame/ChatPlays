@@ -38,18 +38,52 @@ void Emit::save(json& j, bool isDefault)
 void Emit::initalConfig()
 {
 	std::string toEnter;
-	std::cout << "Please Enter commands for chat: " << std::endl;
-	for (auto const &command : commands)
+	std::map<std::string, Buttons> tempBuffer;
+	std::cout << "Please Enter commands for chat: Note that typing Quit will return to previous settings" << std::endl;
+
+	if (commands.size() > 0)
 	{
-		std::cout << command.first << ": ";
-		std::cin >> toEnter;
+		// Perhaps I want a temp buffer?
+		tempBuffer = std::move(commands);
 
-		Buttons Temp = command.second;
+		for (int i = 0; i < commandEnumList.size(); i++)
+		{
+			std::cout << commandEnumList[i] << ": ";
+			std::cin >> toEnter;
 
-		commands.extract(command.first);
-		commands.emplace(toEnter, Temp);
+			if (toEnter == "Quit")
+			{
+				commands.clear();
+				commands = std::move(tempBuffer);
+			}
 
-		toEnter.clear();
+			// A shitty hack!
+			Buttons Temp = tempBuffer[commandEnumList[i]];
+
+			commands.emplace(toEnter, Temp);
+
+			toEnter.clear();
+		}
+	}
+	else
+	{
+		for (int i = 0; i < commandEnumList.size(); i++)
+		{
+			std::cout << commandEnumList[i] << ": ";
+			std::cin >> toEnter;
+
+			if (toEnter == "Default")
+			{
+				commands = std::move(defaultCommands);
+			}
+
+			// A shitty hack!
+			Buttons Temp = defaultCommands[commandEnumList[i]];
+
+			commands.emplace(toEnter, Temp);
+
+			toEnter.clear();
+		}
 	}
 }
 
@@ -230,4 +264,14 @@ Buttons& Emit::GetCommands(std::string key)
 	{
 		return c;
 	}
+}
+
+void from_json(const nlohmann::json& j, Emit& p)
+{
+	j["commands"].get_to(commands);
+}
+
+void to_json(nlohmann::json& j, const Emit& p)
+{
+	j["commands"] = commands;
 }

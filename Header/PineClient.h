@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
 
+#include "settings.h"
 #include "pine.h"
 #include "twitch.h"
-#include "settings.h"
 
 #ifdef __linux__ 
 #include "Linux/control.h"
