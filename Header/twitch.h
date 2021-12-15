@@ -25,6 +25,7 @@ struct TwitchInfo
     TwitchInfo();
     TwitchInfo(nlohmann::json& j);
 
+    TwitchInfo* InitalConfig();
     void Save(nlohmann::json& j, bool isDefault = false);
     void Load(nlohmann::json& j);
 

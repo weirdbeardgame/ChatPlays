@@ -23,7 +23,6 @@ namespace fs = std::filesystem;
 class Settings
 {
     private:
-    std::fstream fileStream;
     // ToDo: Fix path handling to generate settings folder in the executeable's directory. Missing a gui libary makes finding that a challenge.
     fs::path filePath = "settings/settings.json";
     Emit* controllerSettings;
@@ -32,8 +31,7 @@ class Settings
 
     public:
     Settings();
-    Settings(Emit* c, TwitchInfo* t);
-    void init();
+    Settings(Emit& c, TwitchInfo& t);
     void edit();
 
     bool load();

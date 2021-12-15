@@ -5,21 +5,10 @@
 #include <thread>
 #include <mutex>
 
-Emit::Emit()
-{
-	control = json
-	{
-		{"commands", commands},
-		//{"controller", controller},
-	};
-}
-
 Emit::Emit(json j, Message* q)
 {
 	queue = q;
-#ifdef __linux__
 	from_json(j, *this);
-#endif
 }
 
 void Emit::save(json& j, bool isDefault)
@@ -31,60 +20,49 @@ void Emit::save(json& j, bool isDefault)
 	}
 	else
 	{
+		control = *this;
 		j += control;
 	}
 }
 
-void Emit::initalConfig()
+Emit* Emit::InitalConfig()
 {
 	std::string toEnter;
 	std::map<std::string, Buttons> tempBuffer;
-	std::cout << "Please Enter commands for chat: Note that typing Quit will return to previous settings" << std::endl;
+	
+	std::cout << "Please Enter commands for chat: " << std::endl;
+	std::cout << "Default will return default settings" << std::endl;
 
 	if (commands.size() > 0)
 	{
-		// Perhaps I want a temp buffer?
+		std::cout << "Quit will return to previous settings" << std::endl;
+
 		tempBuffer = std::move(commands);
 
-		for (int i = 0; i < commandEnumList.size(); i++)
+		if (toEnter == "Quit")
 		{
-			std::cout << commandEnumList[i] << ": ";
-			std::cin >> toEnter;
-
-			if (toEnter == "Quit")
-			{
-				commands.clear();
-				commands = std::move(tempBuffer);
-			}
-
-			// A shitty hack!
-			Buttons Temp = tempBuffer[commandEnumList[i]];
-
-			commands.emplace(toEnter, Temp);
-
-			toEnter.clear();
+			std::cout << "Quit Typed" << std::endl;
+			commands = std::move(tempBuffer);
+			return this;
 		}
 	}
-	else
+	for (int i = 0; i < commandEnumList.size(); i++)
 	{
-		for (int i = 0; i < commandEnumList.size(); i++)
+		std::cout << commandEnumList[i] << ": ";
+		std::cin >> toEnter;
+
+		if (toEnter == "Default")
 		{
-			std::cout << commandEnumList[i] << ": ";
-			std::cin >> toEnter;
-
-			if (toEnter == "Default")
-			{
-				commands = std::move(defaultCommands);
-			}
-
-			// A shitty hack!
-			Buttons Temp = defaultCommands[commandEnumList[i]];
-
-			commands.emplace(toEnter, Temp);
-
-			toEnter.clear();
+			std::cout << "Setting Commands to default" << std::endl;
+			commands = std::move(defaultCommands);
+			return this;
 		}
+		commands.emplace(toEnter, (Buttons)i);
+		toEnter.clear();
 	}
+
+	// Why is this returning null. What's not being initalized in the background correctly?
+	return this;
 }
 
 VOID CALLBACK notification(
@@ -109,12 +87,12 @@ VOID CALLBACK notification(
 
 // Thread needs to switch to this function. Whoops!
 
-void Emit::poll(Message* q, bool manualControl)
+void Emit::poll(Message* q, Emit settings, bool manualControl)
 {
 	std::string keyCode;
 	if (!isActive)
 	{
-		CreateController(q);
+		CreateController(q, settings);
 	}
 	// Recieve commands from chat and press into emit
 	while (isActive)
@@ -148,10 +126,11 @@ void Emit::poll(Message* q, bool manualControl)
 	}
 }
 
-int Emit::CreateController(Message* q)
+int Emit::CreateController(Message* q, Emit settings)
 {
 	driver = vigem_alloc();
 	queue = q;
+	commands = std::move(settings.commands);
 	if (driver == nullptr)
 	{
 		std::cerr << "Oops! Driver no allocate! Unga Bunga. Me confused!" << std::endl;
@@ -268,10 +247,10 @@ Buttons& Emit::GetCommands(std::string key)
 
 void from_json(const nlohmann::json& j, Emit& p)
 {
-	j["commands"].get_to(commands);
+	j[1]["commands"].get_to(p.commands);
 }
 
 void to_json(nlohmann::json& j, const Emit& p)
 {
-	j["commands"] = commands;
+	j["commands"] = p.commands;
 }

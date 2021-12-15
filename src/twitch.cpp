@@ -3,14 +3,10 @@
 
 TwitchInfo::TwitchInfo()
 {
-    twitch = nlohmann::json
-    {
-        {"userName", "USERNAME HERE"},
-        {"oauthToken", "OAUTH HERE"},
-        {"channelName", "CHANNEL_NAME HERE"}
-    };
+    userName = "USERNAME HERE";
+    oauthToken = "OAUTH HERE";
+    channelName = "CHANNEL_NAME HERE";
 }
-
 
 TwitchInfo::TwitchInfo(json& j)
 {
@@ -30,6 +26,22 @@ void TwitchInfo::Save(json& j, bool isDefault)
         j += twitch;
 
     }
+}
+
+TwitchInfo* TwitchInfo::InitalConfig()
+{
+    std::cout << "Twitch Settings: " << std::endl;
+    std::cout << "Bot Username: ";
+    userName.clear();
+    std::cin >> userName;
+    std::cout << "Bot Oauth token: ";
+    oauthToken.clear();
+    std::cin >> oauthToken;
+    std::cout << "Channel to join: ";
+    channelName.clear();
+    std::cin >> channelName;
+
+    return this;
 }
 
 void TwitchInfo::Load(nlohmann::json& j)
@@ -114,8 +126,6 @@ bool Twitch::login(Message* q, TwitchInfo* s)
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
-
-            //connection.recieve();
 
             if (std::string(connection.recieve()).find(".tmi.twitch.tv JOIN #" + settings.channelName) != std::string::npos)
             {

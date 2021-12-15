@@ -90,8 +90,6 @@ static std::map<std::string, Buttons> defaultCommands
     {"DRIGHT", DRIGHT}
 };
 
-static std::map<std::string, Buttons> commands;
-
 struct axisData
 {
 private:
@@ -119,20 +117,23 @@ private:
     PVIGEM_CLIENT driver;
     PVIGEM_TARGET xbox;
 
-    Buttons cmd;
-    bool emitFail;
+    Buttons cmd = Buttons::CLEAR;
+    bool emitFail = false;
 
-    Message* queue;
+    Message* queue = nullptr;
+
+    std::map<std::string, Buttons> commands;
 
 public:
-    Emit();
+    Emit() = default;
     Emit(Message* q)
     {
         queue = q;
     }
     Emit(json j, Message* q);
 
-    void initalConfig();
+    // Note I make it include itself in the case of there's something real already.
+    Emit* InitalConfig();
     Buttons& GetCommands(std::string key);
 
     // All the action is in here m8
@@ -143,9 +144,9 @@ public:
     friend void to_json(nlohmann::json& j, const Emit& p);
     friend void from_json(const nlohmann::json& j, Emit& p);
 
-    int CreateController(Message* q);
+    int CreateController(Message* q, Emit settings);
     void emit(Message* q, Buttons cmd);
-    void poll(Message* q, bool manual);
+    void poll(Message* q, Emit settings, bool manual);
     void moveABS(axisData& axis);
     void resetABS();
     void pressBtn(Buttons& btn);

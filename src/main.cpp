@@ -10,48 +10,48 @@
 static Message* queue;
 static std::vector<std::thread*> threadPool;
 
-static TwitchInfo* twitchSettings;
-static Emit* controller;
+static TwitchInfo twitchSettings;
+static Emit controller;
 
 void twitch()
 {
-    std::thread th(&Twitch::create, queue, twitchSettings);
+    std::thread th(&Twitch::create, queue, &twitchSettings);
     th.join();
 }
 
 void manualControl()
 {
-    std::thread th(&Emit::poll, Emit(), queue, true);
+    std::thread th(&Emit::poll, Emit(), queue, controller, true);
     th.join();
 }
 
 void startBot()
 {
-    threadPool.push_back(new std::thread(&Twitch::create, queue, twitchSettings));
-    threadPool.push_back(new std::thread(&Emit::poll, Emit(), queue, false));
+    threadPool.push_back(new std::thread(&Twitch::create, queue, &twitchSettings));
+    threadPool.push_back(new std::thread(&Emit::poll, Emit(), queue, controller, false));
     threadPool[0]->join();
 }
 
 int main()
 {
-    twitchSettings = new TwitchInfo();
     queue = new Message();
     Settings* settings = new Settings(controller, twitchSettings);
     bool isActive = true;
     char command;
 
     std::cout << "Avalible Commands: " << std::endl
-    << "t: Test Twitch" << std::endl
-    << "c: Manually control bot" << std::endl
-    << "s: Start Bot in chat play mode" << std::endl
-    << "e: Edit Settings" << std::endl;
+        << "T: Test Twitch" << std::endl
+        << "C: Manually control bot" << std::endl
+        << "S: Start Bot in chat play mode" << std::endl
+        << "E: Edit Settings" << std::endl
+        << "Q: Quit" << std::endl;
 
     while(isActive)
     {
         std::cout << "Enter Command: ";
         std::cin >> command;
 
-        switch (command)
+        switch (std::tolower(command))
         {
             case 't':
                 twitch();
@@ -66,7 +66,11 @@ int main()
                 break;
 
             case 'e':
-                settings->init();
+                settings->edit();
+                break;
+
+            case 'q':
+                isActive = false;
                 break;
 
             default:

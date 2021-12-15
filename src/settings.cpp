@@ -5,33 +5,11 @@ Settings::Settings()
     j = json();
 }
 
-Settings::Settings(Emit* c, TwitchInfo* t)
+Settings::Settings(Emit& c, TwitchInfo& t)
 {
-    twitchSettings = t;
-    controllerSettings = c;
     load();
-}
-
-void Settings::init()
-{
-    char command;
-    std::cout << "Avalible Commands are: " << std::endl << "e: Edit settings" << std::endl
-    << "q: Quit" << std::endl; 
-    std::cin >> command;
-    switch (command)
-    {
-        case 'e':
-            edit();
-            break;
-
-        case 'q':
-            exit(0);
-            break;
-
-        default:
-            std::cerr << "Unrecognized command" << std::endl;
-            break;
-    }
+    t = *twitchSettings;
+    c = *controllerSettings;
 }
 
 void Settings::edit()
@@ -40,40 +18,45 @@ void Settings::edit()
     char command;
 
 
-    std::cout << "T: twitch settings" << std::endl << "C: controller settings" << std::endl;
+    std::cout << "Avalible Commands: " << std::endl << "T: twitch settings" << std::endl << "C: controller settings" << "B: Back" << std::endl;
+    std::cout << "> ";
     std::cin >> command;
 
-    switch (command)
+    switch (std::tolower(command))
     {
-        case 'T':
+        case 't':
             if (twitchSettings == nullptr)
             {
                 twitchSettings = new TwitchInfo();
             }
-            twitchSettings->Save(j, true);
+            twitchSettings = twitchSettings->InitalConfig();
             break;
-        case 'C':
+        case 'c':
             if (controllerSettings == nullptr)
             {
                 controllerSettings = new Emit();
             }
-            controllerSettings->initalConfig();
+            controllerSettings = controllerSettings->InitalConfig();
+            break;
+        case 'b':
+            return;
             break;
     }
 
-    if (!fs::exists(filePath))
-    {
-        save();
-    }
+    save();
+
 }
 
 bool Settings::load()
 {
     if (fs::exists(filePath))
     {
-        fileStream.open(filePath, std::ios::in);
+        std::fstream fileStream(filePath, std::ios::in);
         j = j.parse(fileStream);
+
+        twitchSettings = new TwitchInfo();
         twitchSettings->Load(j); //Psudo load function?
+
         controllerSettings = new Emit(j);
     }
     else
@@ -85,32 +68,41 @@ bool Settings::load()
 
 bool Settings::save()
 {
-    if (!fs::exists(filePath.parent_path()))
+    bool isSaved = false;
+
+    while (!isSaved)
     {
-        fs::create_directory(filePath.parent_path());
+        if (!fs::exists(filePath.parent_path()))
+        {
+            fs::create_directory(filePath.parent_path());
+        }
+        else if (!fs::exists(filePath))
+        {
+            twitchSettings = new TwitchInfo();
+            controllerSettings = new Emit();
+
+            twitchSettings = twitchSettings->InitalConfig();
+            twitchSettings->Save(j, false);
+
+            controllerSettings = controllerSettings->InitalConfig();
+            controllerSettings->save(j, false);
+
+            std::fstream fileStream(filePath, std::ios::out);
+            fileStream << std::setw(4) << j << std::endl;
+            fileStream.close();
+            isSaved = fileStream.good();
+        }
+        else
+        {
+            twitchSettings->Save(j);
+            controllerSettings->save(j);
+
+            std::fstream fileStream(filePath, std::ios::out);
+            fileStream << std::setw(4) << j << std::endl;
+            fileStream.close();
+            isSaved = fileStream.good();
+        }
     }
-    else if (!fs::exists(filePath))
-    {
-        twitchSettings = new TwitchInfo();
-        controllerSettings = new Emit();
 
-        twitchSettings->Save(j, true);
-
-        controllerSettings->initalConfig();
-        controllerSettings->save(j);
-
-        fileStream.open(filePath, std::ios::out);
-        fileStream << std::setw(4) << j << std::endl;
-        return fileStream.fail();
-    }
-    else
-    {
-        twitchSettings->Save(j);
-        controllerSettings->save(j);
-
-        fileStream.open(filePath, std::ios::out);
-        fileStream << std::setw(4) << j << std::endl;
-
-        return fileStream.fail();
-    }
+    return isSaved;
 }
