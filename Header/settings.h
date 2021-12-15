@@ -25,6 +25,7 @@ class Settings
     private:
     // ToDo: Fix path handling to generate settings folder in the executeable's directory. Missing a gui libary makes finding that a challenge.
     fs::path filePath = "settings/settings.json";
+    fs::path executeable;
     Emit* controllerSettings;
     TwitchInfo* twitchSettings;
     json j;

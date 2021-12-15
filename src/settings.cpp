@@ -7,6 +7,18 @@ Settings::Settings()
 
 Settings::Settings(Emit& c, TwitchInfo& t)
 {
+    // First we want to get the path to the executeable
+#ifdef _WIN32
+    char temp[1050];
+    GetModuleFileNameA(NULL, &temp[0], 1050);
+    executeable = temp;
+
+#elif __linux__
+    //readlink();
+#endif
+
+    filePath = (executeable.parent_path() / filePath);
+
     load();
     t = *twitchSettings;
     c = *controllerSettings;
@@ -16,7 +28,6 @@ void Settings::edit()
 {
     json j;
     char command;
-
 
     std::cout << "Avalible Commands: " << std::endl << "T: twitch settings" << std::endl << "C: controller settings" << "B: Back" << std::endl;
     std::cout << "> ";
