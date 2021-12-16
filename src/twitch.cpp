@@ -97,41 +97,34 @@ bool Twitch::login(Message* q, TwitchInfo* s)
 
         if (!isJoined)
         {
-            std::string buf3 = "CAP REQ :twitch.tv/commands\r\n";
+            std::string buf3 = ("JOIN #" + settings.channelName + "\r\n");
             if (connection.sendBytes(buf3.c_str(), buf3.size()) < 0)
             {
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
-            connection.recieve();
 
-            std::string buf4 = "CAP REQ :twitch.tv/membership\r\n";
-            if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
-            {
-                std::cerr << "Send failed: " << strerror(errno) << std::endl;
-                isJoined = false;
-            }
             connection.recieve();
-            std::string buf5 = "CAP REQ :twitch.tv/tags\r\n";
-            if (connection.sendBytes(buf5.c_str(), buf5.size()) < 0)
-            {
-                std::cerr << "Send failed: " << strerror(errno) << std::endl;
-                isJoined = false;
-            }
-            connection.recieve();
-
-            std::string buf6 = ("JOIN #" + settings.channelName + "\r\n");
-            if (connection.sendBytes(buf6.c_str(), buf6.size()) < 0)
-            {
-                std::cerr << "Send failed: " << strerror(errno) << std::endl;
-                isJoined = false;
-            }
 
             if (std::string(connection.recieve()).find(".tmi.twitch.tv JOIN #" + settings.channelName) != std::string::npos)
             {
+                std::string buf4 = "CAP REQ :twitch.tv/membership\r\n";
+                if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
+                {
+                    std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                    isJoined = false;
+                }
+                connection.recieve();
+
+                std::string buf5 = "CAP REQ :twitch.tv/commands\r\n";
+                if (connection.sendBytes(buf5.c_str(), buf5.size()) < 0)
+                {
+                    std::cerr << "Send failed: " << strerror(errno) << std::endl;
+                    isJoined = false;
+                }
+                connection.recieve();
                 std::cout << "Channel Joined" << std::endl;
                 isJoined = true;
-                connection.recieve();
             }
             else
             {
