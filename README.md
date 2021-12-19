@@ -20,8 +20,6 @@ In the controller section for windows all that's needed is a set of commands for
 Any additional settings and commands for PINE will depend on your bot's use and must be added by the implmentation you use.
 
 # ToDo's:
-Fix path of settings folder to revolve around main executeable's path.
-
 Fix settings and general interface to be a bit clearer
 
 Fix Linux EvDev handling and configuration which I plan to revolve around user's controller being captured in the settings and played back as a virtual device
