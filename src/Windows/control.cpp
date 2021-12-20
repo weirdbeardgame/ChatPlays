@@ -87,7 +87,7 @@ VOID CALLBACK notification(
 
 // Thread needs to switch to this function. Whoops!
 
-void Emit::poll(Message* q, Emit settings, bool manualControl)
+void Emit::ControllerThread(Message* q, Emit settings, bool manualControl)
 {
 	std::string keyCode;
 	if (!isActive)

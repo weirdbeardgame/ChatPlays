@@ -148,7 +148,7 @@ public:
 
     int CreateController(Message* q, Emit settings);
     void emit(Message* q, Buttons cmd);
-    void poll(Message* q, Emit settings, bool manual);
+    void ControllerThread(Message* q, Emit settings, bool manual);
     void moveABS(axisData& axis);
     void resetABS();
     void pressBtn(Buttons& btn);

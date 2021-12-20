@@ -55,7 +55,7 @@ public:
     }
     bool login(Message* q, TwitchInfo* s);
 
-    static void create(Message* q, TwitchInfo* s);
+    static void StartTwitchThread(Message* q, TwitchInfo* s);
 
     // bool open(std::string address); for other service integration like discord?
     // recieve commands from chat and parse

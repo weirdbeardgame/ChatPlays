@@ -66,7 +66,7 @@ void from_json(const nlohmann::json& j, TwitchInfo& p)
     j[0]["channelName"].get_to(p.channelName);
 }
 
-void Twitch::create(Message* q, TwitchInfo* s)
+void Twitch::StartTwitchThread(Message* q, TwitchInfo* s)
 {
     Twitch t;
     if (t.login(q, s))
@@ -131,8 +131,8 @@ bool Twitch::login(Message* q, TwitchInfo* s)
                 isJoined = false;
             }
         }
-        return isJoined;
     }
+    return isJoined;
 }
 
 // Step two. Parse command and send through thread to controller or IPC alike.

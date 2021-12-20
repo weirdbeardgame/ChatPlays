@@ -18,6 +18,6 @@ class PineClient
 private:
 
 public:
-
+	void StartPineThread();
 };
 
