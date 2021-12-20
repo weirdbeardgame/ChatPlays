@@ -126,7 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdparty\json.hpp" />
-    <ClInclude Include="Header\pine.h" />
+    <ClInclude Include="3rdparty\pine.h" />
     <ClInclude Include="Header\PineClient.h" />
     <ClInclude Include="header\settings.h" />
     <ClInclude Include="header\twitch.h" />

@@ -61,11 +61,11 @@
     <ClInclude Include="header\message.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header\pine.h">
-      <Filter>3rdParty</Filter>
-    </ClInclude>
     <ClInclude Include="Header\PineClient.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\pine.h">
+      <Filter>3rdParty</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
