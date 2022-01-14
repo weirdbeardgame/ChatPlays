@@ -5,7 +5,7 @@ Settings::Settings()
     j = json();
 }
 
-Settings::Settings(Emit& c, TwitchInfo& t)
+Settings::Settings(TwitchInfo &t)
 {
     // First we want to get the path to the executeable
 #ifdef _WIN32
@@ -14,14 +14,13 @@ Settings::Settings(Emit& c, TwitchInfo& t)
     executeable = temp;
 
 #elif __linux__
-    //readlink();
+    // readlink();
 #endif
 
     filePath = (executeable.parent_path() / filePath);
 
     load();
     t = *twitchSettings;
-    c = *controllerSettings;
 }
 
 void Settings::edit()
@@ -29,33 +28,30 @@ void Settings::edit()
     json j;
     char command;
 
-    std::cout << "Avalible Commands: " << std::endl << "T: twitch settings" << std::endl << "C: controller settings" << "B: Back" << std::endl;
+    std::cout << "Avalible Commands: " << std::endl
+              << "T: twitch settings" << std::endl
+              << "C: controller settings"
+              << "B: Back" << std::endl;
     std::cout << "> ";
     std::cin >> command;
 
     switch (std::tolower(command))
     {
-        case 't':
-            if (twitchSettings == nullptr)
-            {
-                twitchSettings = new TwitchInfo();
-            }
-            twitchSettings = twitchSettings->InitalConfig();
-            break;
-        case 'c':
-            if (controllerSettings == nullptr)
-            {
-                controllerSettings = new Emit();
-            }
-            controllerSettings = controllerSettings->InitalConfig();
-            break;
-        case 'b':
-            return;
-            break;
+    case 't':
+        if (twitchSettings == nullptr)
+        {
+            twitchSettings = new TwitchInfo();
+        }
+        twitchSettings = twitchSettings->InitalConfig();
+        break;
+    case 'c':
+        break;
+    case 'b':
+        return;
+        break;
     }
 
     save();
-
 }
 
 bool Settings::load()
@@ -66,9 +62,9 @@ bool Settings::load()
         j = j.parse(fileStream);
 
         twitchSettings = new TwitchInfo();
-        twitchSettings->Load(j); //Psudo load function?
+        twitchSettings->Load(j); // Psudo load function?
 
-        controllerSettings = new Emit(j);
+        // controllerSettings = new Emit(j);
     }
     else
     {
@@ -90,13 +86,13 @@ bool Settings::save()
         else if (!fs::exists(filePath))
         {
             twitchSettings = new TwitchInfo();
-            controllerSettings = new Emit();
+            // controllerSettings = new Emit();
 
             twitchSettings = twitchSettings->InitalConfig();
             twitchSettings->Save(j, false);
 
-            controllerSettings = controllerSettings->InitalConfig();
-            controllerSettings->save(j, false);
+            // controllerSettings = controllerSettings->InitalConfig();
+            // controllerSettings->save(j, false);
 
             std::fstream fileStream(filePath, std::ios::out);
             fileStream << std::setw(4) << j << std::endl;
@@ -106,7 +102,7 @@ bool Settings::save()
         else
         {
             twitchSettings->Save(j);
-            controllerSettings->save(j);
+            // controllerSettings->save(j);
 
             std::fstream fileStream(filePath, std::ios::out);
             fileStream << std::setw(4) << j << std::endl;

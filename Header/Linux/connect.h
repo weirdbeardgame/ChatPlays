@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 class Connect
 {
-    private:
+private:
     int sock;
     sockaddr_in sockIn;
     hostent *host;
@@ -22,11 +22,11 @@ class Connect
     timeval tv;
     fd_set set;
 
-    public:
-    bool open(const char* hostName, char* port);
+public:
+    bool open(const char *hostName, std::string port);
     bool openSockFile(fs::path socket, uint slot);
-    char* recieve();
-    inline int sendBytes(const char* val, int siz)
+    char *recieve();
+    inline int sendBytes(const char *val, int siz)
     {
         if (sock <= 0)
         {
@@ -47,7 +47,7 @@ class Connect
     }
     bool httpGet();
     bool httpPost();
-    std::string parseCommand(std::string s);
+    std::string ParseCommand(std::string s);
     bool isConnected();
     void disconnect();
 };

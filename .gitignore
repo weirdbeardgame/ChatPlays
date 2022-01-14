@@ -391,3 +391,5 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 
+# Cmake Out folder
+out/*

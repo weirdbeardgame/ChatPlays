@@ -3,14 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 
-bool Connect::open(const char* hostname, char* port)
+bool Connect::open(const char *hostname, std::string port)
 {
     info.ai_family = AF_INET;
     info.ai_flags = AI_PASSIVE;
     info.ai_socktype = SOCK_STREAM;
     info.ai_protocol = IPPROTO_TCP;
 
-    int err = getaddrinfo(hostname, port, &info, &infoP);
+    int err = getaddrinfo(hostname, port.c_str(), &info, &infoP);
     if (err != 0)
     {
         // Note: errno is not set by addr info
@@ -40,43 +40,41 @@ bool Connect::open(const char* hostname, char* port)
     return true;
 }
 
-char* Connect::recieve()
+char *Connect::recieve()
 {
-        int i = 0;
-        int buffSize = 512, buffRecieved = 0;
-        char* buff = new char[512];
-        while (buffRecieved < buffSize)
+    int i = 0;
+    int buffSize = 512, buffRecieved = 0;
+    char *buff = new char[512];
+    while (buffRecieved < buffSize)
+    {
+        // not equal to catch neg error!!!
+        i = recv(sock, buff + buffRecieved, buffSize, 0);
+
+        if (i == 0)
         {
-            // not equal to catch neg error!!!
-            i = recv(sock, buff + buffRecieved, buffSize, 0); 
-
-            if (i == 0)
-            {
-                std::cerr << "Connection severed by server" << std::endl;
-                return nullptr;
-            }
-
-            else if (i < 0)
-            {
-                std::cerr << "Recieve Err: " << gai_strerror(i) << std::endl;
-                return nullptr;
-            }
-            if (buffSize < i)
-            {
-                buffSize = i;
-                buff = new char[buffSize];
-            }
-            buffRecieved += i;
-            buffSize -= i;
+            std::cerr << "Connection severed by server" << std::endl;
+            return nullptr;
         }
 
-        return buff;
-}
+        else if (i < 0)
+        {
+            std::cerr << "Recieve Err: " << gai_strerror(i) << std::endl;
+            return nullptr;
+        }
+        if (buffSize < i)
+        {
+            buffSize = i;
+            buff = new char[buffSize];
+        }
+        buffRecieved += i;
+        buffSize -= i;
+    }
 
+    return buff;
+}
 
 bool Connect::openSockFile(fs::path socket, uint slot)
 {
-    
 }
 
 bool Connect::isConnected()
@@ -84,7 +82,7 @@ bool Connect::isConnected()
     return sock;
 }
 
-std::string Connect::parseCommand(std::string command)
+std::string Connect::ParseCommand(std::string command)
 {
     return strtok(command.data(), "!");
 }
