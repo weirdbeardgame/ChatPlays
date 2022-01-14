@@ -135,7 +135,7 @@ class Emit
     Emit() = default;
     Emit(json j);
 
-    void initalConfig();
+    Emit *InitalConfig();
     Controller selectController();
     void listControllers(pollfd* fds);
 
@@ -155,7 +155,7 @@ class Emit
 
     bool Close();
     bool emit(Message* q, Buttons cmd);
-    void poll(Message* q, bool manual);
+    void ControllerThread(Message* q, Emit settings, bool manual);
     int pressBtn(uint32_t btn);
     int releaseBtn(uint32_t btn);
     int resetABS(uint32_t ABS, int flatAxis);

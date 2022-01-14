@@ -16,6 +16,6 @@ pkg_search_module(EVDEV REQUIRED libevdev)
 include_directories(${CMAKE_SOURCE_DIR}/Header ${EVDEV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/3rdparty)
 link_directories(${CMAKE_SOURCE_DIR}/src ${EVDEV_LIBRARIES})
 
-set (SOURCES src/Linux/control.cpp src/main.cpp src/twitch.cpp src/Linux/connect.cpp src/settings.cpp src/ipc.cpp src/message.cpp)
+set (SOURCES src/Linux/control.cpp src/main.cpp src/twitch.cpp src/Linux/connect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp)
 add_executable(ChatPlays ${SOURCES})
 target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES} Threads::Threads)

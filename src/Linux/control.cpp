@@ -168,14 +168,18 @@ Controller Emit::selectController()
     return control;
 }
 
-void Emit::initalConfig()
+Emit* Emit::InitalConfig()
 {
     pollfd fds[10];
     listControllers(fds);
     controller = selectController();
     bool isMapped = false;
-    // This is where the car crash happens kiddos
-    for (int i = 0; i < controlNames.size(); i++)
+
+    // Think about this for a second. There's a constant flow of data.
+    // What do you actually NEED from that constant flow to be able to play back the controller when serialized.
+    // Cause this aint it dumbass.
+
+    /*for (int i = 0; i < controlNames.size(); i++)
     {
         std::cout << " Configure: " << controlNames[(Buttons)i];
         while(!isMapped)
@@ -199,9 +203,15 @@ void Emit::initalConfig()
                 controller.mappedControls.emplace((Buttons)i, controller.ev);
                 isMapped = true;
             }
+            else
+            {
+                controller.ev = controller.pollEvent(fds);
+            }
         }
         isMapped = false;
-    }
+    }*/
+
+    return this;
 }
 
 bool Emit::CreateController(Message* q)
@@ -253,7 +263,7 @@ bool Emit::CreateController(Message* q)
     return isActive;
 }
 
-void Emit::poll(Message* q, bool manual)
+void Emit::ControllerThread(Message* q, Emit settings, bool manual)
 {
     if (!isActive)
     {
