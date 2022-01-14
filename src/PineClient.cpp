@@ -4,3 +4,8 @@ void PineClient::StartPineThread()
 {
 
 }
+
+void PineClient::Run()
+{
+
+}
