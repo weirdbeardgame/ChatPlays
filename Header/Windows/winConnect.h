@@ -13,19 +13,19 @@ class Connect
 {
     int sock;
     sockaddr_in sockIn;
-    hostent* host;
-    addrinfo info, * infoP;
+    hostent *host;
+    addrinfo info, *infoP;
     timeval tv;
     fd_set set;
 
     std::thread th;
 
 public:
-    bool open(const char* hostName, const char* port);
+    bool open(const char *hostName, const char *port);
     bool openSockFile(fs::path socket, char slot);
-    char* recieve();
+    char *recieve();
     bool sendAll(std::string buf);
-    inline int sendBytes(const char* val, int siz)
+    inline int sendBytes(const char *val, int siz)
     {
         if (sock <= 0)
         {
@@ -46,7 +46,7 @@ public:
     }
     bool httpGet();
     bool httpPost();
-    std::string parseCommand(std::string s);
+    std::string ParseCommand(std::string s);
     bool isConnected();
     void disconnect();
 };

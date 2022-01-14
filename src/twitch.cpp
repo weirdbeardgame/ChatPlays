@@ -8,12 +8,12 @@ TwitchInfo::TwitchInfo()
     channelName = "CHANNEL_NAME HERE";
 }
 
-TwitchInfo::TwitchInfo(json& j)
+TwitchInfo::TwitchInfo(json &j)
 {
     from_json(j, *this);
 }
 
-void TwitchInfo::Save(json& j, bool isDefault)
+void TwitchInfo::Save(json &j, bool isDefault)
 {
     if (isDefault)
     {
@@ -24,11 +24,10 @@ void TwitchInfo::Save(json& j, bool isDefault)
     {
         twitch = *this;
         j += twitch;
-
     }
 }
 
-TwitchInfo* TwitchInfo::InitalConfig()
+TwitchInfo *TwitchInfo::InitalConfig()
 {
     std::cout << "Twitch Settings: " << std::endl;
     std::cout << "Bot Username: ";
@@ -44,29 +43,27 @@ TwitchInfo* TwitchInfo::InitalConfig()
     return this;
 }
 
-void TwitchInfo::Load(nlohmann::json& j)
+void TwitchInfo::Load(nlohmann::json &j)
 {
     from_json(j, *this);
 }
 
-void to_json(json& j, const TwitchInfo& p)
+void to_json(json &j, const TwitchInfo &p)
 {
-    j = nlohmann::json
-    {
+    j = nlohmann::json{
         {"userName", p.userName},
         {"oauthToken", p.oauthToken},
-        {"channelName", p.channelName}
-    };
+        {"channelName", p.channelName}};
 }
 
-void from_json(const nlohmann::json& j, TwitchInfo& p)
+void from_json(const nlohmann::json &j, TwitchInfo &p)
 {
     j[0]["userName"].get_to(p.userName);
     j[0]["oauthToken"].get_to(p.oauthToken);
     j[0]["channelName"].get_to(p.channelName);
 }
 
-void Twitch::StartTwitchThread(Message* q, TwitchInfo* s)
+void Twitch::StartTwitchThread(Message *q, TwitchInfo *s)
 {
     Twitch t;
     if (t.login(q, s))
@@ -75,7 +72,7 @@ void Twitch::StartTwitchThread(Message* q, TwitchInfo* s)
     }
 }
 
-bool Twitch::login(Message* q, TwitchInfo* s)
+bool Twitch::login(Message *q, TwitchInfo *s)
 {
     settings = *s;
     if (connection.open(address.c_str(), "6667"))
@@ -142,25 +139,29 @@ bool Twitch::update()
     {
         buffer += connection.recieve();
 
-        std::string com = connection.parseCommand(buffer);
-
-        if (buffer.find("PING :tmi.twitch.tv") != std::string::npos)
-        {
-            std::cout << "Pong: " << pong.c_str() << std::endl;
-            if (!connection.sendBytes(pong.c_str(), pong.size()))
-            {
-                std::cout << "Send Error" << std::endl;
-                return false;
-            }
-        }
-        if (buffer.find("PRIVMSG ") != std::string::npos)
-        {
-            queue->enque(com);
-        }
-
-        com.clear();
-        buffer.clear();
         std::flush(std::cout);
     }
+    return true;
+}
+
+// If it's a command process it! Don't push it to global thread queue needlessly! Enqueue in the recognized twitch queue of commands and push to controller.
+
+bool Twitch::ParseCommand(std::string command)
+{
+    std::string com = connection.ParseCommand(buffer);
+
+    if (buffer.find("PING :tmi.twitch.tv") != std::string::npos)
+    {
+        std::cout << "Pong: " << pong.c_str() << std::endl;
+        if (!connection.sendBytes(pong.c_str(), pong.size()))
+        {
+            std::cout << "Send Error" << std::endl;
+            return false;
+        }
+    }
+
+    com.clear();
+    buffer.clear();
+
     return true;
 }

@@ -89,7 +89,7 @@ bool Connect::isConnected()
     return sock;
 }
 
-std::string Connect::parseCommand(std::string command)
+std::string Connect::ParseCommand(std::string command)
 {
     std::string buffer = command.substr(command.find_last_of(":") + 1);
     buffer = buffer.erase(buffer.find("\r\n"));
