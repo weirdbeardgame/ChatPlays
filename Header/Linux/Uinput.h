@@ -9,8 +9,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <iostream>
-#include <filesystem>
 
 #include <linux/uinput.h>
 
@@ -20,6 +18,7 @@
 
 namespace fs = std::filesystem;
 
+// Do note these are static incase they need to be directly refrenced elsewhere
 static std::map<Buttons, uint32_t> buttonCodes = {
     {A, BTN_SOUTH},
     {B, BTN_EAST},
@@ -44,16 +43,11 @@ static std::map<ABS, uint32_t> Abs{
 // It can hold it's own assigned controller data and mappings
 struct Emit : Controller
 {
-    // The constructed data packet for each ABS movement
-    // struct std::map<uint32_t, input_absinfo> absinfo;
-
     // All of this data is intended to create as convincing a device as possible
     char deviceName[UINPUT_MAX_NAME_SIZE] = "Microsoft X-Box 360 pad";
     input_id deviceID;
 
     int fd;
-    fs::path eventPath = "/dev/input";
-
     // Controller struct pointers
     uinput_setup usetup;
     input_event ev;
@@ -64,6 +58,7 @@ struct Emit : Controller
     bool isMapped = false;
 
     Emit();
+    int SetAbs(int type, int val, int min, int max, int fuzz, int flat, int resolution);
     bool AttachController() override;
     int PressButton(Buttons b) override;
     int ReleaseButton(Buttons b) override;

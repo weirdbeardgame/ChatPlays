@@ -9,13 +9,31 @@ Emit::Emit()
     memset(&usetup, 0, sizeof(usetup));
     memset(&deviceID, 0, sizeof(deviceID));
 
-    deviceID.bustype = 0x3;
+    deviceID.bustype = BUS_USB;
     deviceID.vendor = 0x45e;
     deviceID.product = 0x28e;
     deviceID.version = 0x114;
     usetup.id = deviceID;
 
     memcpy(usetup.name, deviceName, UINPUT_MAX_NAME_SIZE);
+}
+
+int Emit::SetAbs(int type, int val, int min, int max, int fuzz, int flat, int resolution)
+{
+    uinput_abs_setup absSet;
+    absSet.code = type;
+    absSet.absinfo.maximum = max;
+    absSet.absinfo.minimum = min;
+    absSet.absinfo.value = val;
+    absSet.absinfo.fuzz = fuzz;
+    absSet.absinfo.flat = flat;
+    absSet.absinfo.resolution = resolution;
+    if (ioctl(fd, UI_ABS_SETUP, &absSet) < 0)
+    {
+        std::cout << "ABS Setup Error: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    return 0;
 }
 
 bool Emit::AttachController()
@@ -54,6 +72,15 @@ bool Emit::AttachController()
             isActive = false;
             return false;
         }
+
+        SetAbs(ABS_X, 0, -32768, 32767, 16, 128, 0);
+        SetAbs(ABS_Y, 0, -32768, 32767, 16, 128, 0);
+        SetAbs(ABS_RX, 0, -32768, 32767, 16, 128, 0);
+        SetAbs(ABS_RY, 0, -32768, 32767, 16, 128, 0);
+        SetAbs(ABS_Z, 0, 0, 255, 0, 0, 0);
+        SetAbs(ABS_RZ, 0, 0, 255, 0, 0, 0);
+        SetAbs(ABS_HAT0X, 0, -1, 1, 0, 0, 0);
+        SetAbs(ABS_HAT0Y, 0, -1, 1, 0, 0, 0);
 
         if (ioctl(fd, UI_DEV_CREATE) < 0)
         {
