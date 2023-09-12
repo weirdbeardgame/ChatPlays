@@ -36,7 +36,7 @@ static std::map<Buttons, uint16_t> buttonPos =
         {DPAD_RIGHT, XUSB_GAMEPAD_DPAD_RIGHT}};
 
 // This needs to be a thread safe blocking class!
-class Emit : Controller
+class Emit : public Controller
 {
 private:
     // I need Xinput

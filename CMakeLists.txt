@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27.4)
+cmake_minimum_required(VERSION 3.26.4)
 Project(ChatPlays)
 message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
@@ -23,12 +23,13 @@ if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
+    
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
     add_subdirectory(3rdparty/windows/ViGEmClient)
 
     set (SOURCES src/Windows/Xinput.cpp src/main.cpp src/twitch.cpp src/Windows/winConnect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp)
     add_executable(ChatPlays ${SOURCES})
+    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient wsock32 ws2_32)
     target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty)
-    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient ws2_32)
 endif()
 
