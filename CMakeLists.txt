@@ -15,7 +15,9 @@ if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
     find_package(PkgConfig REQUIRED)
 
     pkg_search_module(EVDEV REQUIRED libevdev)
-    set (SOURCES src/Linux/Uinput.cpp src/main.cpp src/twitch.cpp src/Linux/connect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp)
+    set (SOURCES src/Linux/Uinput.cpp src/main.cpp src/twitch.cpp 
+    src/Linux/connect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp
+    src/Command.cpp)
 
     add_executable(ChatPlays ${SOURCES})
     target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty ${EVDEV_INCLUDE_DIRS})

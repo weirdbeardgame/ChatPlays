@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <vector>
 
 // #include "settings.h"
 #include "pine.h"
@@ -20,12 +21,15 @@ private:
     // This represents the active emulator. Use polymorphisim. There's class PCSX2, and class RPCS3 etc.
     Shared *emulator;
 
-    // ToDo Add Tas.
-
-    // This is a map of potential commands and functions that execute them or. You can use a switch case in the run function to parse the command.
-    std::map<std::string, void *> commands;
+    std::vector<Shared::BatchCommand> RecievedPackets;
 
 public:
     void Open(std::string emu, int port);
     void Run();
+
+    // ToDo, grab size of and subtract
+    bool WriteStruct(uint32_t adr, void *st, size_t size);
+
+    template <class T>
+    T ReadStruct(uint32_t adr, size_t size);
 };
