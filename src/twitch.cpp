@@ -1,130 +1,77 @@
 #include "twitch.h"
 #include <errno.h>
 
-TwitchInfo::TwitchInfo()
+void Twitch::StartTwitchThread(SettingsData *s)
 {
-    userName = "USERNAME HERE";
-    oauthToken = "OAUTH HERE";
-    channelName = "CHANNEL_NAME HERE";
-}
-
-TwitchInfo::TwitchInfo(json &j)
-{
-    from_json(j, *this);
-}
-
-void TwitchInfo::Save(json &j, bool isDefault)
-{
-    if (isDefault)
+    if (login(s))
     {
-        TwitchInfo t = TwitchInfo();
-        j += t.twitch;
-    }
-    else
-    {
-        twitch = *this;
-        j += twitch;
+        update();
     }
 }
 
-TwitchInfo *TwitchInfo::InitalConfig()
-{
-    std::cout << "Twitch Settings: " << std::endl;
-    std::cout << "Bot Username: ";
-    userName.clear();
-    std::cin >> userName;
-    std::cout << "Bot Oauth token: ";
-    oauthToken.clear();
-    std::cin >> oauthToken;
-    std::cout << "Channel to join: ";
-    channelName.clear();
-    std::cin >> channelName;
-
-    return this;
-}
-
-void TwitchInfo::Load(nlohmann::json &j)
-{
-    from_json(j, *this);
-}
-
-void to_json(json &j, const TwitchInfo &p)
-{
-    j = nlohmann::json{
-        {"userName", p.userName},
-        {"oauthToken", p.oauthToken},
-        {"channelName", p.channelName}};
-}
-
-void from_json(const nlohmann::json &j, TwitchInfo &p)
-{
-    j[0]["userName"].get_to(p.userName);
-    j[0]["oauthToken"].get_to(p.oauthToken);
-    j[0]["channelName"].get_to(p.channelName);
-}
-
-void Twitch::StartTwitchThread(Message *q, TwitchInfo *s)
-{
-    Twitch t;
-    if (t.login(q, s))
-    {
-        t.update();
-    }
-}
-
-bool Twitch::login(Message *q, TwitchInfo *s)
+bool Twitch::login(SettingsData *s)
 {
     settings = *s;
-    if (connection.open(address.c_str(), "6667"))
+    connection = new Socket();
+    if (connection->Open(address.c_str(), "6667"))
     {
-        queue = q;
         std::string buf1 = ("PASS " + settings.oauthToken + "\r\n");
-        if (connection.sendBytes(buf1.data(), buf1.size()) <= 0)
+
+        std::cout << "Buff: " << buf1 << std::endl;
+        if (connection->Send(buf1.data(), buf1.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
             isJoined = false;
         }
 
+        std::cout << "Msg: " << connection->Recieve() << std::endl;
+
         std::string buf2 = ("NICK " + settings.userName + "\r\n");
-        if (connection.sendBytes(buf2.c_str(), buf2.size()) <= 0)
+        std::cout << "Buff: " << buf2 << std::endl;
+
+        if (connection->Send(buf2.c_str(), buf2.size()) <= 0)
         {
             std::cerr << "Send failed: " << strerror(errno) << std::endl;
             isJoined = false;
         }
+
+        std::cout << "Msg: " << connection->Recieve() << std::endl;
 
         if (!isJoined)
         {
             std::string buf3 = ("JOIN #" + settings.channelName + "\r\n");
-            if (connection.sendBytes(buf3.c_str(), buf3.size()) < 0)
+            std::cout << "Buff: " << buf3 << std::endl;
+            if (connection->Send(buf3.c_str(), buf3.size()) < 0)
             {
                 std::cerr << "Send failed: " << strerror(errno) << std::endl;
                 isJoined = false;
             }
 
-            connection.recieve();
-
-            if (std::string(connection.recieve()).find(".tmi.twitch.tv JOIN #" + settings.channelName) != std::string::npos)
+            if (std::string(connection->Recieve()).find(".tmi.twitch.tv JOIN #" + settings.channelName) != std::string::npos)
             {
                 std::string buf4 = "CAP REQ :twitch.tv/membership\r\n";
-                if (connection.sendBytes(buf4.c_str(), buf4.size()) < 0)
+                std::cout << "Buff: " << buf4 << std::endl;
+                if (connection->Send(buf4.c_str(), buf4.size()) < 0)
                 {
                     std::cerr << "Send failed: " << strerror(errno) << std::endl;
                     isJoined = false;
                 }
-                connection.recieve();
+                connection->Recieve();
 
                 std::string buf5 = "CAP REQ :twitch.tv/commands\r\n";
-                if (connection.sendBytes(buf5.c_str(), buf5.size()) < 0)
+                std::cout << "Buff: " << buf5 << std::endl;
+                if (connection->Send(buf5.c_str(), buf5.size()) < 0)
                 {
                     std::cerr << "Send failed: " << strerror(errno) << std::endl;
                     isJoined = false;
                 }
-                connection.recieve();
+                connection->Recieve();
                 std::cout << "Channel Joined" << std::endl;
                 isJoined = true;
             }
             else
             {
+                std::cout << "Msg: " << connection->Recieve() << std::endl;
                 isJoined = false;
             }
         }
@@ -135,9 +82,9 @@ bool Twitch::login(Message *q, TwitchInfo *s)
 // Step two. Parse command and send through thread to controller or IPC alike.
 bool Twitch::update()
 {
-    while (connection.isConnected())
+    while (connection->IsConnected())
     {
-        buffer += connection.recieve();
+        buffer += connection->Recieve();
 
         std::flush(std::cout);
     }
@@ -148,12 +95,12 @@ bool Twitch::update()
 
 bool Twitch::ParseCommand(std::string command)
 {
-    std::string com = connection.ParseCommand(buffer);
+    std::string com = connection->ParseCommand(buffer);
 
     if (buffer.find("PING :tmi.twitch.tv") != std::string::npos)
     {
         std::cout << "Pong: " << pong.c_str() << std::endl;
-        if (!connection.sendBytes(pong.c_str(), pong.size()))
+        if (!connection->Send(pong.c_str(), pong.size()))
         {
             std::cout << "Send Error" << std::endl;
             return false;

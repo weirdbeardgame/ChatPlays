@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <string.h>
-#include <map>
 #include "PineClient.h"
 #include "Controller.h"
 #include "twitch.h"
@@ -13,16 +12,6 @@ enum CommandTypes
     PINE_CMD
 };
 
-std::map<CommandTypes, std::string>
-    TwitchCommands{
-        {CommandTypes::TWITCH, "join"},
-        {CommandTypes::TWITCH, "disconnect"},
-        {CommandTypes::TWITCH, "ban"},
-        {CommandTypes::TWITCH, "unban"},
-        {CommandTypes::TWITCH, "clear"},
-        {CommandTypes::TWITCH, "subscribers"},
-        {CommandTypes::TWITCH, "subscribersoff"}};
-
 class Command
 {
 
@@ -32,5 +21,5 @@ private:
     PineClient pine;
 
 public:
-    bool Parse(std::string cmd);
+    bool Parse(std::string cmd, const char *delim);
 };

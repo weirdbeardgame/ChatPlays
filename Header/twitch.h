@@ -2,35 +2,12 @@
 #include <iostream>
 #include <stdio.h>
 #ifdef __linux__
-#include "Linux/connect.h"
+#include "Linux/LinuxSock.h"
 #elif _WIN32
-#include "Windows/winConnect.h"
+#include "Windows/WinConnect.h"
 #endif
-
-#include "json.hpp"
-#include "message.h"
-#include "json.hpp"
-
-using json = nlohmann::json;
-
-struct TwitchInfo
-{
-    std::string userName;
-    std::string oauthToken;
-    std::string channelName;
-
-    json twitch;
-
-    TwitchInfo();
-    TwitchInfo(nlohmann::json &j);
-
-    TwitchInfo *InitalConfig();
-    void Save(nlohmann::json &j, bool isDefault = false);
-    void Load(nlohmann::json &j);
-
-    friend void to_json(nlohmann::json &j, const TwitchInfo &p);
-    friend void from_json(const nlohmann::json &j, TwitchInfo &p);
-};
+#include "settings.h"
+#include "Buffer.h"
 
 class Twitch
 {
@@ -39,22 +16,28 @@ private:
     std::string address = "irc.chat.twitch.tv";
     std::string pong = "PONG :tmi.twitch.tv\r\n";
 
-    Connect connection;
+    std::vector<std::string>
+        Commands{
+            "join",
+            "Disconnect",
+            "ban",
+            "unban",
+            "clear",
+            "subscribers",
+            "subscribersoff"};
 
-    Message *queue;
-    TwitchInfo settings;
+    Connect *connection;
+
+    Buffer *queue;
+    SettingsData settings;
 
     bool isJoined = false;
 
 public:
     Twitch() = default;
-    Twitch(Message *q)
-    {
-        queue = q;
-    }
-    bool login(Message *q, TwitchInfo *s);
+    bool login(SettingsData *s);
 
-    void StartTwitchThread(Message *q, TwitchInfo *s);
+    void StartTwitchThread(SettingsData *s);
 
     bool ParseCommand(std::string command);
 

@@ -1,6 +1,6 @@
 #include "Windows/winConnect.h"
 
-bool Connect::open(const char* hostName, const char* port)
+bool Socket::Open(const char* hostName, const char* port)
 {
     WSADATA winSockData;
     if (WSAStartup(MAKEWORD(2, 2), &winSockData) != 0)
@@ -47,7 +47,7 @@ bool Connect::open(const char* hostName, const char* port)
 
 }
 
-char* Connect::recieve()
+char* Socket::Recieve()
 {
     int i = 0;
     int buffSize = 480, buffRecieved = 0;
@@ -78,25 +78,25 @@ char* Connect::recieve()
     return buff;
 }
 
-bool Connect::openSockFile(fs::path socket, char slot)
+bool Socket::openSockFile(fs::path socket, char slot)
 {
-     //open(socket.string().c_str(), slot);
+     //Open(socket.string().c_str(), slot);
     return false;
 }
 
-bool Connect::isConnected()
+bool Socket::isConnected()
 {
     return sock;
 }
 
-std::string Connect::ParseCommand(std::string command)
+std::string Socket::ParseCommand(std::string command)
 {
     std::string buffer = command.substr(command.find_last_of(":") + 1);
     buffer = buffer.erase(buffer.find("\r\n"));
     return buffer;
 }
 
-void Connect::disconnect()
+void Socket::Disconnect()
 {
     memset(&info, 0, sizeof(info));
     delete infoP;

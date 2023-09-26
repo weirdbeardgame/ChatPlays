@@ -11,9 +11,6 @@
 #include <string.h>
 
 #include <linux/uinput.h>
-
-#include "message.h"
-
 #include "Controller.h"
 
 namespace fs = std::filesystem;

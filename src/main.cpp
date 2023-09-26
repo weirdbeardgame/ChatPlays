@@ -3,20 +3,23 @@
 #include <thread>
 #include <mutex>
 
+#include "Buffer.h"
 #include "Controller.h"
+#ifdef __linux__
+#include "Linux/Uinput.h"
+#elif _WIN32
+#include "Windows/Xinput.h"
+#endif
 #include "settings.h"
-#include "message.h"
 #include "twitch.h"
 
-static Message *queue;
 static std::vector<std::thread *> threadPool;
-
-static TwitchInfo twitchSettings;
 Controller *controller;
+Settings *settings;
 
 void twitch()
 {
-    std::thread th(&Twitch::StartTwitchThread, Twitch(), queue, &twitchSettings);
+    std::thread th(&Twitch::StartTwitchThread, Twitch(), settings->GetSettings());
     th.join();
 }
 
@@ -41,14 +44,13 @@ void manualControl()
 
 void startBot()
 {
-    threadPool.push_back(new std::thread(&Twitch::StartTwitchThread, Twitch(), queue, &twitchSettings));
+    threadPool.push_back(new std::thread(&Twitch::StartTwitchThread, Twitch(), settings->GetSettings()));
     threadPool[0]->join();
 }
 
 int main()
 {
-    queue = new Message();
-    // Settings *settings = new Settings(twitchSettings);
+    settings = new Settings();
     bool isActive = true;
     char command;
 
@@ -81,7 +83,7 @@ int main()
             break;
 
         case 'e':
-            // settings->edit();
+            settings->Edit();
             break;
 
         case 'q':

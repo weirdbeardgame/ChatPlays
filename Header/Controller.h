@@ -69,4 +69,10 @@ public:
     virtual int MoveABS(ABS abs, float axis) = 0;
     virtual int ResetABS(ABS abs) = 0;
     virtual void DisconnectController() = 0;
+
+    void ParseCommand(std::string cmd)
+    {
+        auto btnIt = buttonName.begin();
+        auto absIt = absName.begin();
+    }
 };

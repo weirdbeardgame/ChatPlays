@@ -9,29 +9,32 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Threads)
+find_package(CURL)
 set(THREADS_PREFER_PTHREAD_FLAG ON) # Without this flag CMake may resort to just '-lpthread'
+
 
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
     find_package(PkgConfig REQUIRED)
 
     pkg_search_module(EVDEV REQUIRED libevdev)
     set (SOURCES src/Linux/Uinput.cpp src/main.cpp src/twitch.cpp 
-    src/Linux/connect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp
-    src/Command.cpp)
+    src/Linux/LinuxSock.cpp src/settings.cpp src/PineClient.cpp src/Command.cpp 
+    src/Buffer.cpp)
 
     add_executable(ChatPlays ${SOURCES})
-    target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty ${EVDEV_INCLUDE_DIRS})
-    target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES} Threads::Threads)
+    target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty ${EVDEV_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
+    target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES} Threads::Threads ${CURL_LIBRARIES})
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
     
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
     add_subdirectory(3rdparty/windows/ViGEmClient)
+    #add_subdirectory(3rdparty/curl)
 
     set (SOURCES src/Windows/Xinput.cpp src/main.cpp src/twitch.cpp src/Windows/winConnect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp)
     add_executable(ChatPlays ${SOURCES})
-    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient wsock32 ws2_32)
+    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient wsock32 ws2_32 curlcpp)
     target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty)
 endif()
 

@@ -1,36 +1,99 @@
 #include "settings.h"
+#include <stdio.h>
 
 Settings::Settings()
 {
-    j = json();
+    filePath = (CurrentExecuteablePath() / filePath);
+
+    // Assume this is the first time configuration.
+    if (!fs::exists(filePath))
+    {
+        if (FirstTime())
+        {
+            Load();
+        }
+        else
+        {
+            std::cerr << "Error writing config file, make sure you have space" << std::endl;
+        }
+    }
+    else
+    {
+        Load();
+    }
 }
 
-Settings::Settings(TwitchInfo &t)
+fs::path Settings::CurrentExecuteablePath()
 {
-    // First we want to get the path to the executeable
-#ifdef _WIN32
-    char temp[1050];
-    GetModuleFileNameA(NULL, &temp[0], 1050);
-    executeable = temp;
-
-#elif __linux__
-    // readlink();
+    std::string path;
+#ifdef __linux__
+    path.reserve(PATH_MAX);
+    int count = readlink("/proc/self/exe", path.data(), PATH_MAX);
+    if (count != -1)
+    {
+        return fs::path(dirname(path.data()));
+    }
+#elif _WIN32
+    path.reserve(MAX_PATH);
+    GetModuleFileName(NULL, path.data(), MAX_PATH);
+    return fs::canonical(path);
 #endif
-
-    filePath = (executeable.parent_path() / filePath);
-
-    load();
-    t = *twitchSettings;
+    return fs::path();
 }
 
-void Settings::edit()
+bool Settings::FirstTime()
+{
+    std::cout << "Twitch or Discord? T for twitch, D for discord" << std::endl;
+    char command;
+    std::cout << "> ";
+    std::cin >> command;
+
+    switch (tolower(command))
+    {
+    case 't':
+        return TwitchConnect();
+        break;
+
+    case 'd':
+        return DiscordConnect();
+        break;
+    }
+
+    return false;
+}
+
+bool Settings::TwitchConnect()
+{
+    std::cout << "Bot UserName: ";
+    std::cin.ignore();
+    std::getline(std::cin, settings.userName);
+    std::cout << "Channel to connect to: ";
+    std::cin.ignore();
+    std::getline(std::cin, settings.channelName);
+    std::cout << "Bot Oauth Token: ";
+    std::cin.ignore();
+    std::getline(std::cin, settings.oauthToken);
+
+    j = settings;
+
+    Save();
+    return true;
+}
+
+bool Settings::DiscordConnect()
+{
+    std::cout << "Not Implemented" << std::endl;
+    return false;
+}
+
+void Settings::Edit()
 {
     json j;
     char command;
 
     std::cout << "Avalible Commands: " << std::endl
-              << "T: twitch settings" << std::endl
-              << "C: controller settings"
+              << "T: Twitch settings" << std::endl
+              << "D: Discord settings"
               << "B: Back" << std::endl;
     std::cout << "> ";
     std::cin >> command;
@@ -38,42 +101,33 @@ void Settings::edit()
     switch (std::tolower(command))
     {
     case 't':
-        if (twitchSettings == nullptr)
-        {
-            twitchSettings = new TwitchInfo();
-        }
-        twitchSettings = twitchSettings->InitalConfig();
         break;
-    case 'c':
+    case 'd':
         break;
     case 'b':
         return;
         break;
     }
 
-    save();
+    Save();
 }
 
-bool Settings::load()
+bool Settings::Load()
 {
     if (fs::exists(filePath))
     {
         std::fstream fileStream(filePath, std::ios::in);
         j = j.parse(fileStream);
-
-        twitchSettings = new TwitchInfo();
-        twitchSettings->Load(j); // Psudo load function?
-
-        // controllerSettings = new Emit(j);
+        settings = j;
     }
     else
     {
-        save();
+        Save();
     }
     return true;
 }
 
-bool Settings::save()
+bool Settings::Save()
 {
     bool isSaved = false;
 
@@ -85,15 +139,6 @@ bool Settings::save()
         }
         else if (!fs::exists(filePath))
         {
-            twitchSettings = new TwitchInfo();
-            // controllerSettings = new Emit();
-
-            twitchSettings = twitchSettings->InitalConfig();
-            twitchSettings->Save(j, false);
-
-            // controllerSettings = controllerSettings->InitalConfig();
-            // controllerSettings->save(j, false);
-
             std::fstream fileStream(filePath, std::ios::out);
             fileStream << std::setw(4) << j << std::endl;
             fileStream.close();
@@ -101,9 +146,6 @@ bool Settings::save()
         }
         else
         {
-            twitchSettings->Save(j);
-            // controllerSettings->save(j);
-
             std::fstream fileStream(filePath, std::ios::out);
             fileStream << std::setw(4) << j << std::endl;
             fileStream.close();

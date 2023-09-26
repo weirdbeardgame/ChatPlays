@@ -1,16 +1,16 @@
-#include "Linux/connect.h"
+#include "Linux/LinuxSock.h"
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
-bool Connect::open(const char *hostname, std::string port)
+bool Socket::Open(const char *hostname, const char *port)
 {
     info.ai_family = AF_INET;
     info.ai_flags = AI_PASSIVE;
     info.ai_socktype = SOCK_STREAM;
     info.ai_protocol = IPPROTO_TCP;
 
-    int err = getaddrinfo(hostname, port.c_str(), &info, &infoP);
+    int err = getaddrinfo(hostname, port, &info, &infoP);
     if (err != 0)
     {
         // Note: errno is not set by addr info
@@ -40,7 +40,7 @@ bool Connect::open(const char *hostname, std::string port)
     return true;
 }
 
-char *Connect::recieve()
+char *Socket::Recieve()
 {
     int i = 0;
     int buffSize = 512, buffRecieved = 0;
@@ -73,21 +73,32 @@ char *Connect::recieve()
     return buff;
 }
 
-bool Connect::openSockFile(fs::path socket, uint slot)
+bool Socket::Send(std::string buf, int size)
 {
+    if (sock <= 0)
+    {
+        std::cerr << "Connection terminated" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Buffer: " << buf << std::endl;
+
+    int amtSent = send(sock, buf.c_str(), buf.size(), 0);
+    if (amtSent <= 0)
+    {
+        std::cerr << "Send Err: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "Size: " << size << std::endl;
+    return amtSent;
 }
 
-bool Connect::isConnected()
-{
-    return sock;
-}
-
-std::string Connect::ParseCommand(std::string command)
+std::string Socket::ParseCommand(std::string command)
 {
     return strtok(command.data(), "!");
 }
 
-void Connect::disconnect()
+void Socket::Disconnect()
 {
     memset(&info, 0, sizeof(info));
     delete infoP;
