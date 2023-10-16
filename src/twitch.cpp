@@ -13,7 +13,7 @@ bool Twitch::login(SettingsData *s)
 {
     settings = *s;
     connection = new Socket();
-    if (connection->Open(address.c_str(), "6667"))
+    if (connection->Open(address.c_str(), "6697"))
     {
         std::string buf1 = ("PASS " + settings.oauthToken + "\r\n");
 

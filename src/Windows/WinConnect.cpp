@@ -1,6 +1,6 @@
-#include "Windows/winConnect.h"
+#include "Windows/WinConnect.h"
 
-bool Socket::Open(const char* hostName, const char* port)
+bool Socket::Open(const char *hostName, const char *port)
 {
     WSADATA winSockData;
     if (WSAStartup(MAKEWORD(2, 2), &winSockData) != 0)
@@ -22,7 +22,7 @@ bool Socket::Open(const char* hostName, const char* port)
         return false;
     }
 
-    for (addrinfo* connectP = infoP; connectP != nullptr; connectP = connectP->ai_next)
+    for (addrinfo *connectP = infoP; connectP != nullptr; connectP = connectP->ai_next)
     {
         sock = socket(connectP->ai_family, connectP->ai_socktype, connectP->ai_protocol);
 
@@ -32,7 +32,7 @@ bool Socket::Open(const char* hostName, const char* port)
             return false;
         }
 
-        //ioctlsocket(sock, FIONBIO, (unsigned long*)1);
+        // ioctlsocket(sock, FIONBIO, (unsigned long*)1);
 
         int conErr = connect(sock, connectP->ai_addr, connectP->ai_addrlen);
 
@@ -44,14 +44,13 @@ bool Socket::Open(const char* hostName, const char* port)
     }
 
     return true;
-
 }
 
-char* Socket::Recieve()
+char *Socket::Recieve()
 {
     int i = 0;
     int buffSize = 480, buffRecieved = 0;
-    char* buff = new char[512];
+    char *buff = new char[512];
     if (i = recv(sock, buff, buffSize, 0) > 0)
     {
         // not equal to catch neg error!!!
@@ -76,6 +75,32 @@ char* Socket::Recieve()
         }
     }
     return buff;
+}
+
+int Socket::Send(std::string buf, int siz)
+{
+    if (sock <= 0)
+    {
+        std::cerr << "Connection terminated" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Buffer: " << val << std::endl;
+
+    int size = send(sock, val, siz, 0);
+    if (size <= 0)
+    {
+        std::cerr << "Send Err: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "Size: " << size << std::endl;
+    return size;
+}
+
+bool Socket::openSockFile(fs::path socket, char slot)
+{
+    // Open(socket.string().c_str(), slot);
+    return false;
 }
 
 bool Socket::isConnected()

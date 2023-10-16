@@ -73,7 +73,7 @@ char *Socket::Recieve()
     return buff;
 }
 
-bool Socket::Send(std::string buf, int size)
+int Socket::Send(std::string buf, int size)
 {
     if (sock <= 0)
     {
@@ -89,7 +89,7 @@ bool Socket::Send(std::string buf, int size)
         std::cerr << "Send Err: " << strerror(errno) << std::endl;
         return false;
     }
-    std::cout << "Size: " << size << std::endl;
+    std::cout << "Size: " << amtSent << std::endl;
     return amtSent;
 }
 

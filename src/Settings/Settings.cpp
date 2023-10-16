@@ -1,4 +1,4 @@
-#include "settings.h"
+#include "Settings.h"
 #include <stdio.h>
 
 Settings::Settings()
@@ -51,44 +51,17 @@ bool Settings::FirstTime()
     switch (tolower(command))
     {
     case 't':
-        return TwitchConnect();
         break;
 
     case 'd':
-        return DiscordConnect();
         break;
     }
 
     return false;
 }
 
-bool Settings::TwitchConnect()
-{
-    std::cout << "Bot UserName: ";
-    std::cin.ignore();
-    std::getline(std::cin, settings.userName);
-    std::cout << "Channel to connect to: ";
-    std::cin.ignore();
-    std::getline(std::cin, settings.channelName);
-    std::cout << "Bot Oauth Token: ";
-    std::cin.ignore();
-    std::getline(std::cin, settings.oauthToken);
-
-    j = settings;
-
-    Save();
-    return true;
-}
-
-bool Settings::DiscordConnect()
-{
-    std::cout << "Not Implemented" << std::endl;
-    return false;
-}
-
 void Settings::Edit()
 {
-    json j;
     char command;
 
     std::cout << "Avalible Commands: " << std::endl

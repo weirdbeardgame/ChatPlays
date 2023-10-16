@@ -6,7 +6,6 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include "Connect.h"
-namespace fs = std::filesystem;
 
 class Socket : public Connect
 {
@@ -21,7 +20,7 @@ private:
 public:
     virtual bool Open(const char *hostname, const char *port) override;
     virtual char *Recieve() override;
-    virtual bool Send(std::string buf, int size) override;
+    virtual int Send(std::string buf, int size) override;
     virtual std::string ParseCommand(std::string s) override;
     virtual void Disconnect() override;
 };

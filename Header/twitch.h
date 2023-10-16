@@ -6,7 +6,7 @@
 #elif _WIN32
 #include "Windows/WinConnect.h"
 #endif
-#include "settings.h"
+#include "Settings.h"
 #include "Buffer.h"
 
 class Twitch

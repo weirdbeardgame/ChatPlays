@@ -2,20 +2,21 @@
 #include <iostream>
 #include <vector>
 
+#ifdef __linux__
+#include "Linux/Uinput.h"
+#elif _WIN32
+#include "Windows/Xinput.h"
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 #pragma comment(lib, "Ws2_32.lib")
 
+#endif
+
 // #include "settings.h"
 #include "pine.h"
 #include "twitch.h"
-
-#ifdef __linux__
-#include "Linux/Uinput.h"
-#elif _WIN32
-#include "Windows/Xinput.h"
-#endif
 
 using namespace PINE;
 

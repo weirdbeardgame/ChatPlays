@@ -16,9 +16,9 @@
 #include "Windows/winConnect.h"
 #endif
 
+#include "Oauth.h"
 #include "json.hpp"
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 struct SettingsData
@@ -35,15 +35,13 @@ class Settings
 private:
     // Below are basic properties for generating a settings file and folder
     fs::path filePath = "settings/settings.json";
-    json j;
+    nlohmann::json j;
     SettingsData settings;
+    fs::path CurrentExecuteablePath();
 
 public:
     Settings();
     bool FirstTime();
-    bool TwitchConnect();
-    bool DiscordConnect();
-    fs::path CurrentExecuteablePath();
     void Edit();
     bool Load();
     bool Save();

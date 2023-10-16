@@ -10,7 +10,7 @@
 #elif _WIN32
 #include "Windows/Xinput.h"
 #endif
-#include "settings.h"
+#include "Settings.h"
 #include "twitch.h"
 
 static std::vector<std::thread *> threadPool;
