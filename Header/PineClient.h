@@ -23,7 +23,6 @@ using namespace PINE;
 // ToDo: Write your own implementation of PINE for whatever game or emulator software you're using
 class PineClient
 {
-private:
     // This represents the active emulator. Use polymorphisim. There's class PCSX2, and class RPCS3 etc.
     Shared *emulator;
 
@@ -31,11 +30,38 @@ private:
 
 public:
     void Open(std::string emu, int port);
-    void Run();
+    bool IsEmulatorOpen() { return emulator != nullptr; }
 
-    // ToDo, grab size of and subtract
-    bool WriteStruct(uint32_t adr, void *st, size_t size);
+    uint8_t Read8(uint32_t adr);
+    uint16_t Read16(uint32_t adr);
+    uint32_t Read32(uint32_t adr);
+    uint64_t Read64(uint32_t adr);
 
-    template <class T>
-    T ReadStruct(uint32_t adr, size_t size);
+    // ToDo, need to actually pack struct instead of writing address
+    template <typename T>
+    bool WriteStruct(uint32_t adr, T st, int size)
+    {
+    }
+
+    void Write8(uint32_t adr, uint8_t val);
+    void Write16(uint32_t adr, uint16_t val);
+    void Write32(uint32_t adr, uint32_t val);
+    void Write64(uint32_t adr, uint64_t val);
+
+    // Need to fix reading junk data
+    template <typename T>
+    T ReadStruct(uint32_t adr)
+    {
+        uint32_t *bytes;
+        int amtToRead;
+        T structToReturn;
+        while (amtToRead < sizeof(T))
+        {
+            *bytes = emulator->Read<uint32_t>(adr);
+            bytes++;
+            amtToRead += 4;
+        }
+        structToReturn = *reinterpret_cast<T *>(bytes);
+        return structToReturn;
+    }
 };
