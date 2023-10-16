@@ -48,7 +48,7 @@ private:
     int playerAmount;
 
 public:
-    Emit();
+    Emit() = default;
 
     // All the action is in here m8
     bool isActive = false;

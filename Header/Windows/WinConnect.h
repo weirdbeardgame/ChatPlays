@@ -24,30 +24,8 @@ class Socket : public Connect
 
 public:
     virtual bool Open(const char *hostName, const char *port) override;
-    virtual bool openSockFile(fs::path socket, char slot) override;
     virtual char *Recieve() override;
-    virtual bool Send(std::string buf) override;
-    inline int sendBytes(const char *val, int siz)
-    {
-        if (sock <= 0)
-        {
-            std::cerr << "Connection terminated" << std::endl;
-            return -1;
-        }
-
-        std::cout << "Buffer: " << val << std::endl;
-
-        int size = send(sock, val, siz, 0);
-        if (size <= 0)
-        {
-            std::cerr << "Send Err: " << strerror(errno) << std::endl;
-            return false;
-        }
-        std::cout << "Size: " << size << std::endl;
-        return size;
-    }
-    bool httpGet();
-    bool httpPost();
+    virtual bool Send(std::string buf, int siz) override;
     std::string ParseCommand(std::string s);
     bool isConnected();
     void Disconnect();

@@ -78,12 +78,6 @@ char* Socket::Recieve()
     return buff;
 }
 
-bool Socket::openSockFile(fs::path socket, char slot)
-{
-     //Open(socket.string().c_str(), slot);
-    return false;
-}
-
 bool Socket::isConnected()
 {
     return sock;
@@ -94,6 +88,26 @@ std::string Socket::ParseCommand(std::string command)
     std::string buffer = command.substr(command.find_last_of(":") + 1);
     buffer = buffer.erase(buffer.find("\r\n"));
     return buffer;
+}
+
+bool Socket::Send(std::string buf, int siz)
+{
+    if (sock <= 0)
+    {
+        std::cerr << "Connection terminated" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Buffer: " << buf << std::endl;
+
+    int size = send(sock, buf.c_str(), siz, 0);
+    if (size <= 0)
+    {
+        std::cerr << "Send Err: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "Size: " << size << std::endl;
+    return size;
 }
 
 void Socket::Disconnect()

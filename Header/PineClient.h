@@ -2,6 +2,11 @@
 #include <iostream>
 #include <vector>
 
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+#pragma comment(lib, "Ws2_32.lib")
+
 // #include "settings.h"
 #include "pine.h"
 #include "twitch.h"

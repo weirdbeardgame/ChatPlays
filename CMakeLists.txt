@@ -22,8 +22,8 @@ if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
     src/Buffer.cpp)
 
     add_executable(ChatPlays ${SOURCES})
-    target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty ${EVDEV_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
-    target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES} Threads::Threads ${CURL_LIBRARIES})
+    target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty ${EVDEV_INCLUDE_DIRS})
+    target_link_libraries(ChatPlays PRIVATE ${EVDEV_LIBRARIES} Threads::Threads)
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
@@ -32,9 +32,10 @@ if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
     add_subdirectory(3rdparty/windows/ViGEmClient)
     #add_subdirectory(3rdparty/curl)
 
-    set (SOURCES src/Windows/Xinput.cpp src/main.cpp src/twitch.cpp src/Windows/winConnect.cpp src/settings.cpp src/PineClient.cpp src/message.cpp)
+    set (SOURCES src/Windows/Xinput.cpp src/main.cpp src/twitch.cpp src/Windows/winConnect.cpp src/settings.cpp src/PineClient.cpp
+    )
     add_executable(ChatPlays ${SOURCES})
-    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient wsock32 ws2_32 curlcpp)
+    target_link_libraries(ChatPlays PRIVATE Threads::Threads ViGEmClient wsock32 ws2_32)
     target_include_directories(ChatPlays PRIVATE ${CMAKE_SOURCE_DIR}/Header ${CMAKE_SOURCE_DIR}/3rdparty)
 endif()
 

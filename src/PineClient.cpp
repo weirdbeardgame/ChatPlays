@@ -15,6 +15,8 @@ bool PineClient::WriteStruct(uint32_t adr, void *st, size_t size)
     {
         // emulator->Write()
     }
+
+    return true;
 }
 
 template <class T>
